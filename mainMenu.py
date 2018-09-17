@@ -1,38 +1,36 @@
 import os
+from nodes.nodeTCP import *
+
 
 
 def menu():
     os.system('cls')
 
-    print("Selecciona una opción")
-    print("\t1 - Crear un nodo")
-    print("\t2 - Borrar un nodo")
-    print("\t3 - Tercera opcion")
-    print("\t9 - Salir")
+    print("Our communication system")
+    print("\t1 - Create a TCP node")
+    print("\t2 - Create a UDP node")
+    print("\t9 - Exit")
 
 
 if __name__ == '__main__':
 
-    while True:
-
         menu()
-        opcionMenu = input("Digite su eleccion: ")
+        opcionMenu = input("Pick a number: ")
 
         if opcionMenu == "1":
+            ipNode = input("\nGive me the IP: ")
+            portNode = int(input("\nGive me the port: "))
+            nodeTCP(ipNode, portNode)
             print("")
-            input("Creando un nodo...\npulsa una tecla para continuar")
+            input("Creating a TCP node\nPress any key to continue")
 
         elif opcionMenu == "2":
             print("")
-            input("Borrando un nodo...\npulsa una tecla para continuar")
-
-        elif opcionMenu == "3":
-            print("")
-            input("...........\npulsa una tecla para continuar")
+            input("Create an UDP node\nPress any key to continue")
 
         elif opcionMenu == "9":
-            break
+            sys.exit()
 
         else:
             print("")
-            input("No has pulsado ninguna opción correcta...\npulsa una tecla para continuar")
+            input("Its not that hard, just pick the right number\nPress any key to continue")
