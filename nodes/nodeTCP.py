@@ -33,8 +33,12 @@ class nodeTCP:
             threading.Thread(target=self.listenMessage, args=(connectionSocket, sentence)).start()
         print("I dont feel good Mr Stark...")
 
+    # escucha cada conexion para procesar el mensaje
     def listenMessage(self, connectionSocket, sentence):
-        pass
+        while 1:
+            sentence = connectionSocket.recv(1024)
+            print(connectionSocket.getpeername())
+
 
     def send(self):
         serverName = input("\nGive me your bro's IP: ")
@@ -45,6 +49,8 @@ class nodeTCP:
         print("Im on the highway")
         sentence = input("Say it: ")
         clientSocket.send(sentence)
+        modifiedSentence = clientSocket.recv(1024)
+        print("From Server:"), modifiedSentence
 
     # metodo para borrar un nodo
     def kill(self):
