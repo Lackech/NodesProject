@@ -1,11 +1,8 @@
-import os
 from nodes.nodeTCP import *
-
 
 
 def menu():
     os.system('cls')
-
     print("Our communication system")
     print("\t1 - Create a TCP node")
     print("\t2 - Create a UDP node")
