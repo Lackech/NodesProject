@@ -1,4 +1,5 @@
 from nodes.nodeTCP import *
+from nodes.nodeUDP import *
 
 
 def menu():
@@ -31,7 +32,7 @@ if __name__ == '__main__':
             str = opcionMenu.split(" ")
             serverIp = str[1]
             serverPort = int(str[2])
-            node = nodeTCP(serverIp, serverPort)
+            node = nodeUDP(serverIp, serverPort)
             print("")
             input("Create an UDP node\nPress any key to continue")
             node.nodeMenu()

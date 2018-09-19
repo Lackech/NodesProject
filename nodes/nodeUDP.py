@@ -41,7 +41,6 @@ class nodeUDP(Node):
 
         #Envía un mensaje codificado
         clientSocket.sendto(self.encode().encode('utf-8'), address)
-        self.currentConnection.append(address)
         #Cerramos la conexión
         clientSocket.close()
 
