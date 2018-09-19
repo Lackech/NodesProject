@@ -3,10 +3,10 @@ from nodes.nodeTCP import *
 
 def menu():
     os.system('cls')
-    print("Our communication system")
-    print("\t1 - Create a TCP node")
-    print("\t2 - Create a UDP node")
-    print("\t9 - Exit")
+    print("To create a node you need to write this command:")
+    print("\tnode-<X> IP port")
+    print("\t<X> can be: pseudoBGP or intAs")
+    print("Else write 0 to exit.")
 
 
 if __name__ == '__main__':
@@ -16,22 +16,28 @@ if __name__ == '__main__':
 
 
         menu()
-        opcionMenu = input("Pick a number: ")
+        opcionMenu = input("Now choose: ")
 
-        if opcionMenu == "1":
-            serverIp = input("\nGive me the IP: ")
-            serverPort = int(input("\nGive me the port: "))
+        if opcionMenu == "node-pseudoBGP IP port":
+            str = opcionMenu.split(" ")
+            serverIp = str[1]
+            serverPort = int(str[2])
             node = nodeTCP(serverIp, serverPort)
             print("")
             input("Creating a TCP node\nPress any key to continue")
             node.nodeMenu()
 
 
-        elif opcionMenu == "2":
+        elif opcionMenu == "node-intAS IP port":
+            str = opcionMenu.split(" ")
+            serverIp = str[1]
+            serverPort = int(str[2])
+            node = nodeTCP(serverIp, serverPort)
             print("")
             input("Create an UDP node\nPress any key to continue")
+            node.nodeMenu()
 
-        elif opcionMenu == "9":
+        elif opcionMenu == "0":
             sys.exit()
 
         else:
