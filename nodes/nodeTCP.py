@@ -37,8 +37,8 @@ class nodeTCP(Node):
                     if len(sentence) is 8:
                         #Si es de tamaño 8 quiere decir que el address que envio el mensaje murió
                         self.currentConnection.pop(clientAddress)
-                        keys = self.reachabilityTable.keys()
-                        for addr in self.reachabilityTable:
+                        copy = self.reachabilityTable.copy()
+                        for addr in copy:
                             value = self.reachabilityTable.get(addr)
                             if value[1] == clientAddress:
                                 self.reachabilityTable.pop(addr)
