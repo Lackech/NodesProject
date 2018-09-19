@@ -1,7 +1,5 @@
 from nodes.node import *
 from socket import *
-import os
-import sys
 import threading
 
 
@@ -23,25 +21,35 @@ class nodeTCP(Node):
         print("The server is listening and ready to receive\n\n")
         while self.alive:
             connectionSocket, addr = self.serverSocket.accept()
-            sentence = connectionSocket.recv(1024)
-            print(sentence.decode())
-            threading.Thread(target=self.listenMessage, args=(connectionSocket, sentence)).start()
+            threading.Thread(target=self.listenMessage, args=(connectionSocket, addr)).start()
+
         print("I dont feel good Mr Stark...")
 
-    # escucha cada conexion para procesar el mensaje
-    def listenMessage(self, connectionSocket, sentence):
-        while 1:
-            sentence = connectionSocket.recv(1024)
-            print(sentence)
+    # Escucha cada conexion para procesar el mensaje
+    def listenMessage(self, connectionSocket, addr):
+        print(addr)
+        while True:
+            try:
+                data = connectionSocket.recv(1024)
+                if data:
+                    # Usa la información recibida como respuesta
+                    response = data
+                    connectionSocket.send(response)
+                    print(data)
+                else:
+                    raise error('Client disconnected')
+            except:
+                connectionSocket.close()
+                return False
 
     def send(self):
         serverName = input("\nGive me your bruhh's IP: ")
         serverPort = int(input("\nGive me the port: "))
+
         clientSocket = socket(AF_INET, SOCK_STREAM)
         clientSocket.connect((serverName, serverPort))
+
         # posible creacion de hilo
-        print("Im on the highway")
-        sentence = input("Say it: ")
-        clientSocket.send(sentence.encode('utf-8'))
+        clientSocket.send(self.encode().encode('utf-8'))
         modifiedSentence = clientSocket.recv(1024)
         print("From Server:"), modifiedSentence

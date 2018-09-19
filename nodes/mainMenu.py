@@ -28,6 +28,9 @@ if __name__ == '__main__':
 
 
         elif opcionMenu == "2":
+            serverIp = input("\nGive me the IP: ")
+            serverPort = int(input("\nGive me the port: "))
+            node = nodeTCP(serverIp, serverPort)
             print("")
             input("Create an UDP node\nPress any key to continue")
 
