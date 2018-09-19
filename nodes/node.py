@@ -7,6 +7,8 @@ class Node:
     def __init__(self, serverIp, serverPort):
         self.serverIp = serverIp
         self.serverPort = serverPort
+        self.reachabilityTable = {}
+        self.connectionsNow = {}
 
     def listen(self):
         #Debe ser sobreescrito por el método del nodo hijo
@@ -16,25 +18,24 @@ class Node:
         # Debe ser sobreescrito por el método del nodo hijo
         pass
 
-    #Método para borrar un nodo
     def kill(self):
-        self.alive = False
+        #Debe ser sobrescrito por el método del nodo hijo
         pass
 
-    def saveDataTable(self, reachabilityTable, address, mask, cost, senderAddress):
+    def saveDataTable(self, address, mask, cost, senderAddress):
         key = (address, mask)
         value = (cost, senderAddress)
         d1 = {key: value}
-        if reachabilityTable.get(key) != None:
-            row = reachabilityTable.get(key)
+        if self.reachabilityTable.get(key) is not None:
+            row = self.reachabilityTable.get(key)
             if row[0] > cost:
-                reachabilityTable.update(d1)
+                self.reachabilityTable.update(d1)
                 print("Data updated")
         else:
-            reachabilityTable.update(d1)
+            self.reachabilityTable.update(d1)
             print("Data inserted")
 
-    def decrypt(self, packetMessage, reachabilityTable, senderAddress):
+    def decrypt(self, packetMessage, senderAddress):
         pass
     
     #Método para codificar mensaje
