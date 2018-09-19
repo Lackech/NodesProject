@@ -12,6 +12,8 @@ class nodeTCP:
 
         self.port = int(port)
 
+        self.reachabilityTable = {}
+
         self.serverSocket = socket(AF_INET, SOCK_STREAM)
 
         self.listener = threading.Thread(target=self.listen)
@@ -29,7 +31,7 @@ class nodeTCP:
         while self.alive:
             connectionSocket, addr = self.serverSocket.accept()
             sentence = connectionSocket.recv(1024)
-
+            print(sentence.decode())
             threading.Thread(target=self.listenMessage, args=(connectionSocket, sentence)).start()
         print("I dont feel good Mr Stark...")
 
@@ -37,11 +39,11 @@ class nodeTCP:
     def listenMessage(self, connectionSocket, sentence):
         while 1:
             sentence = connectionSocket.recv(1024)
-            print(connectionSocket.getpeername())
+            print(sentence)
 
 
     def send(self):
-        serverName = input("\nGive me your bro's IP: ")
+        serverName = input("\nGive me your bruhh's IP: ")
         serverPort = int(input("\nGive me the port: "))
         clientSocket = socket(AF_INET, SOCK_STREAM)
         clientSocket.connect((serverName, serverPort))
