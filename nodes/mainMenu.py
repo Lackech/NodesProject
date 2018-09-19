@@ -11,15 +11,21 @@ def menu():
 
 if __name__ == '__main__':
 
+        # sys.exit(1 if sys.byteorder=='big' else 0)
+
+
+
         menu()
         opcionMenu = input("Pick a number: ")
 
         if opcionMenu == "1":
-            ipNode = input("\nGive me the IP: ")
-            portNode = int(input("\nGive me the port: "))
-            nodeTCP(ipNode, portNode)
+            serverIp = input("\nGive me the IP: ")
+            serverPort = int(input("\nGive me the port: "))
+            node = nodeTCP(serverIp, serverPort)
             print("")
             input("Creating a TCP node\nPress any key to continue")
+            node.nodeMenu()
+
 
         elif opcionMenu == "2":
             print("")

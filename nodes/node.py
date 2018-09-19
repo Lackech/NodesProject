@@ -21,6 +21,21 @@ class Node:
         self.alive = False
         pass
 
+    def saveDataTable(self, reachabilityTable, address, mask, cost, senderAddress):
+        key = (address, mask)
+        value = (cost, senderAddress)
+        d1 = {key: value}
+        if reachabilityTable.get(key) != None:
+            row = reachabilityTable.get(key)
+            if row[0] > cost:
+                reachabilityTable.update(d1)
+                print("Data updated")
+        else:
+            reachabilityTable.update(d1)
+            print("Data inserted")
+
+    def decrypt(self, packetMessage, reachabilityTable, senderAddress):
+
     #Método para codificar mensaje
     def encode(self):
         numberOfElements = int(input("Select the number of elements:"))
@@ -68,3 +83,4 @@ class Node:
             else:
                 print("")
                 input("Its not that hard, just pick the right number\nPress any key to continue")
+
