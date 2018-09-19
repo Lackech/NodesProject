@@ -1,5 +1,6 @@
 import os
 import sys
+#node-pseudoBGP localhost 8080
 
 class Node:
 
@@ -35,30 +36,37 @@ class Node:
             self.reachabilityTable.update(d1)
             print("Data inserted")
 
-    def decrypt(self, packetMessage, reachabilityTable, senderAddress):
-        num = packetMessage.split()[0][:8]
+    def decrypt(self, packetMessage, senderAddress):
+        # Optenemos la cantidad de mensajes recibidos
+        num = packetMessage.split()[0][:16]
         n = int(num, 2)
+        print(n)
         for i in range(0,n):
-            num1 = packetMessage[(i*56)+8:(i*56)+8*2]
+            #Optenemos el Ip
+            num1 = packetMessage[(i * 64) + 8 * 2:(i * 64) + 8 * 3]
             n1 = int(num1, 2)
-            num2 = packetMessage[(i*56)+8*2:(i*56)+8*3]
+            num2 = packetMessage[(i * 64) + 8 * 3:(i * 64) + 8 * 4]
             n2 = int(num2, 2)
-            num3 = packetMessage[(i*56)+8*3:(i*56)+8*4]
+            num3 = packetMessage[(i * 64) + 8 * 4:(i * 64) + 8 * 5]
             n3 = int(num3, 2)
-            num4 = packetMessage[(i*56)+8*4:(i*56)+8*5]
+            num4 = packetMessage[(i * 64) + 8 * 5:(i * 64) + 8 * 6]
             n4 = int(num4, 2)
 
             address = str(n1) + "." + str(n2) + "." + str(n3) + "." +str(n4)
-
             print(address)
 
-            mask = packetMessage[(i*56)+8*5:(i*56)+8*6]
-            maskNum = int(mask,2)
+            #Optenemos la máscara
+            mask = packetMessage[(i * 64) + 8 * 6:(i * 64) + 8 * 7]
+            maskNum = int(mask, 2)
+            print(maskNum)
 
-            cost = packetMessage[(i*56)+8*6:(i*56)+8*9]
-            costNum = int(cost,2)
+            #Optenemos el costo
+            cost = packetMessage[(i * 64) + 8 * 7:(i * 64) + 8 * 10]
+            costNum = int(cost, 2)
+            print(costNum)
 
-            self.saveDataTable(reachabilityTable,address,maskNum,costNum,senderAddress)
+            #Guardamos en la tabla de alcanzabilidad
+            self.saveDataTable(address,maskNum,costNum,senderAddress)
     
     #Método para codificar mensaje
     def encode(self):
@@ -76,12 +84,17 @@ class Node:
 
         return bytestring
 
+    def showTable(self):
+        for network in self.reachabilityTable:
+            print(network, self.reachabilityTable[network])
+
     def menu(self):
         os.system('cls')
         print("What you gonna do????")
         print("\t1 - Say something to some bruhh")
         print("\t2 - Kill myself")
-        print("\t3 - Just give a sh#$t and go away")
+        print("\t3 - Show me the table")
+        print("\t4 - Just give a sh#$t and go away")
 
     def nodeMenu(self):
         while self.alive:
@@ -100,6 +113,10 @@ class Node:
                 input("Shit, dying was forever...\nPress any key to continue")
 
             elif opcionMenu == 3:
+                print("-------Table--------")
+                self.showTable()
+
+            elif opcionMenu == 4:
                 sys.exit()
                 self.alive = False
                 break

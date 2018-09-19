@@ -27,15 +27,20 @@ class nodeTCP(Node):
         print("I dont feel good Mr Stark...")
 
     # Escucha cada conexion para procesar el mensaje
-    def listenMessage(self, connectionSocket):
+    def listenMessage(self, connectionSocket, clientAddress):
         while True:
             try:
                 #Optiene la información, sí es que la hay
-                data = connectionSocket.recv(1024)
-                if data:
-                    #Decodifica la información
-                    pass
-                    #Da una respuesta al cliente
+                sentence = connectionSocket.recv(1024)
+                if sentence:
+                    #Preguntamos el tamaño del mensaje
+                    if sentence.length() is 8:
+                        #Si es de tamaño 8 quiere decir que el address que envio el mensaje murió
+
+                    else:
+                        #Decodifica la información
+                        self.decrypt(sentence, clientAddress)
+                        #Da una respuesta al cliente
                 else:
                     raise error('Client disconnected')
             except:
@@ -50,20 +55,25 @@ class nodeTCP(Node):
         address = (serverName, serverPort)
 
         #Verifica si existe una conexión, de no ser así la crea y la guarda
-        if self.currentConnection[address] is None:
+        if address in self.currentConnection:
+            print('Connection exist')
+            clientSocket = self.currentConnection[address]
+        else:
+            print('New connection')
             clientSocket = socket(AF_INET, SOCK_STREAM)
             clientSocket.connect((serverName, serverPort))
             self.currentConnection[address] = clientSocket
-        else:
-            clientSocket = self.currentConnection[address]
+
+            #Creamos un hilo para escuchar lo que responda la conexión.
+            threading.Thread(target=self.listenMessage, args=(clientSocket, address)).start()
+
 
         #Envía un mensaje codificado
         clientSocket.send(self.encode().encode('utf-8'))
-        #Creamos un hilo para escuchar lo que responda la conexión.
-        threading.Thread(target=self.listenMessage, args=(clientSocket, address)).start()
 
 
-    # Método para borrar un nodo
+
+    #Método para borrar un nodo
     def kill(self):
         # Matamos el servidor
         self.alive = False

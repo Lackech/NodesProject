@@ -1,4 +1,4 @@
-from nodes.Node import Node
+from nodes.node import *
 from socket import *
 import threading
 
@@ -22,6 +22,7 @@ class nodeUDP(Node):
             sentence, clientAddress = self.serverSocket.recvfrom(2048)
 
             #Decodificamos el mensaje recibido
+            self.decrypt(sentence,clientAddress)
 
             #Retornamos una respuesta
 
