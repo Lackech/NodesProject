@@ -35,7 +35,29 @@ class Node:
             print("Data inserted")
 
     def decrypt(self, packetMessage, reachabilityTable, senderAddress):
-        pass
+        num = packetMessage.split()[0][:8]
+        n = int(num, 2)
+        for i in range(0,n):
+            num1 = packetMessage[(i*56)+8:(i*56)+8*2]
+            n1 = int(num1, 2)
+            num2 = packetMessage[(i*56)+8*2:(i*56)+8*3]
+            n2 = int(num2, 2)
+            num3 = packetMessage[(i*56)+8*3:(i*56)+8*4]
+            n3 = int(num3, 2)
+            num4 = packetMessage[(i*56)+8*4:(i*56)+8*5]
+            n4 = int(num4, 2)
+
+            address = str(n1) + "." + str(n2) + "." + str(n3) + "." +str(n4)
+
+            print(address)
+
+            mask = packetMessage[(i*56)+8*5:(i*56)+8*6]
+            maskNum = int(mask,2)
+
+            cost = packetMessage[(i*56)+8*6:(i*56)+8*9]
+            costNum = int(cost,2)
+
+            self.saveDataTable(reachabilityTable,address,maskNum,costNum,senderAddress)
     
     #Método para codificar mensaje
     def encode(self):
