@@ -34,7 +34,7 @@ class nodeTCP(Node):
                 sentence = connectionSocket.recv(1024)
                 if sentence:
                     #Preguntamos el tamaño del mensaje
-                    if sentence.length() is 8:
+                    if len(sentence) is 8:
                         #Si es de tamaño 8 quiere decir que el address que envio el mensaje murió
                         self.currentConnection.pop(clientAddress)
                         keys = self.reachabilityTable.keys()
@@ -42,7 +42,6 @@ class nodeTCP(Node):
                             value = self.reachabilityTable.get(addr)
                             if value[1] == clientAddress:
                                 self.reachabilityTable.pop(addr)
-
                     else:
                         #Decodifica la información
                         self.decrypt(sentence, clientAddress)

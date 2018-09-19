@@ -26,6 +26,7 @@ class nodeUDP(Node):
 
             #Retornamos una respuesta
 
+        self.serverSocket.close()
         print("I dont feel good Mr Stark...")
 
     def send(self):
@@ -48,11 +49,3 @@ class nodeUDP(Node):
     def kill(self):
         #Matamos el servidor
         self.alive = False
-
-        #Creamos el socket para enviar mensajes de que está mueriendo
-        clientSocket = socket(AF_INET, SOCK_DGRAM)
-        for address in self.currentConnection:
-            #Enviamos los mensajes a los diferentes address
-            clientSocket.sendto('00000000'.encode('utf-8'), address)
-
-        clientSocket.close()
