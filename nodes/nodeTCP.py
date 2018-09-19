@@ -23,6 +23,7 @@ class nodeTCP(Node):
             self.currentConnection[addr] = connectionSocket
             threading.Thread(target=self.listenMessage, args=(connectionSocket, addr)).start()
 
+        self.serverSocket.close()
         print("I dont feel good Mr Stark...")
 
     # Escucha cada conexion para procesar el mensaje
@@ -64,6 +65,12 @@ class nodeTCP(Node):
 
     # Método para borrar un nodo
     def kill(self):
+        # Matamos el servidor
         self.alive = False
-        for key in self.connectionsNow:
 
+        #Buscamos los sockets que se han creado y les enviamos un mensaje de que está muriendo
+        #además se cierran los respectivos sockets
+        for address in self.currentConnection:
+            clientSocket = self.currentConnection[address]
+            clientSocket.send('00000000'.encode('utf-8'))
+            clientSocket.close()
