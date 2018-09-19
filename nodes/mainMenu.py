@@ -9,6 +9,7 @@ def menu():
     print("Else write 0 to exit.")
 
 
+
 if __name__ == '__main__':
 
         # sys.exit(1 if sys.byteorder=='big' else 0)
