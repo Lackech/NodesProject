@@ -22,6 +22,20 @@ class Node:
         pass
 
     #Método para codificar mensaje
+    def encode(self):
+        numberOfElements = int(input("Select the number of elements:"))
+        bytestring = '{0:016b}'.format(numberOfElements)
+
+        for i in range(0,numberOfElements):
+            ipAdress = input("Write the Ip adress:")
+            stringIp = ipAdress.split('.')
+            for s in stringIp:
+                bytestring += '{0:08b}'.format(int(s))
+
+            bytestring += '{0:08b}'.format(int(input("Write the Mascara adress:")))
+            bytestring += '{0:024b}'.format(int(input("Write the Cost:")))
+
+        return bytestring
 
     def menu(self):
         os.system('cls')
