@@ -35,7 +35,8 @@ class Node:
             print("Data inserted")
 
     def decrypt(self, packetMessage, reachabilityTable, senderAddress):
-
+        pass
+    
     #Método para codificar mensaje
     def encode(self):
         numberOfElements = int(input("Select the number of elements:"))
