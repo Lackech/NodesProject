@@ -11,6 +11,10 @@ def menu():
 
 if __name__ == '__main__':
 
+        # sys.exit(1 if sys.byteorder=='big' else 0)
+
+
+
         menu()
         opcionMenu = input("Pick a number: ")
 

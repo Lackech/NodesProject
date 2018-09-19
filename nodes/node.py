@@ -21,6 +21,25 @@ class Node:
         self.alive = False
         pass
 
+    def saveDataTable(self, reachabilityTable, address, mask, cost, senderAddress):
+        key = (address, mask)
+        value = (cost, senderAddress)
+        d1 = {key: value}
+        if reachabilityTable.get(key) != None:
+            row = reachabilityTable.get(key)
+            if row[0] > cost:
+                reachabilityTable.update(d1)
+                print("Data updated")
+        else:
+            reachabilityTable.update(d1)
+            print("Data inserted")
+
+    def decrypt(self, packetMessage, reachabilityTable, senderAddress):
+
+        
+
+
+
     def menu(self):
         os.system('cls')
         print("What you gonna do????")
