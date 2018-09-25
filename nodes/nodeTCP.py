@@ -3,10 +3,10 @@ from socket import *
 import threading
 
 
-class nodeTCP(Node):
+class NodeTcp(Node):
 
-    def __init__(self, serverIp, serverPort):
-        Node.__init__(self, serverIp, serverPort)
+    def __init__(self, serverAddress):
+        Node.__init__(self, serverAddress)
         self.serverSocket = socket(AF_INET, SOCK_STREAM)
         self.currentConnection = {}
         self.listener = threading.Thread(target=self.listen)

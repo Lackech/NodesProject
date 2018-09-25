@@ -2,11 +2,11 @@ from nodes.node import *
 from socket import *
 import threading
 
-class nodeUDP(Node):
+class NodeUdp(Node):
 
     # constructor del nodo
-    def __init__(self, serverIp, serverPort):
-        Node.__init__(self, serverIp, serverPort)
+    def __init__(self, serverAddress):
+        Node.__init__(self, serverAddress)
         self.serverSocket = socket(AF_INET, SOCK_DGRAM)
         self.currentConnection = []
         self.listener = threading.Thread(target=self.listen)

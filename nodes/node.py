@@ -1,15 +1,13 @@
 import os
 import sys
-#node-pseudoBGP localhost 8080
 
 class Node:
 
     #Constructor de la clase nodo
-    def __init__(self, serverIp, serverPort):
-        self.serverIp = serverIp
-        self.serverPort = serverPort
+    def __init__(self, serverAddress):
+        self.serverIp = serverAddress[0]
+        self.serverPort = serverAddress[1]
         self.reachabilityTable = {}
-        self.connectionsNow = {}
 
     def listen(self):
         #Debe ser sobreescrito por el método del nodo hijo
