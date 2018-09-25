@@ -29,13 +29,7 @@ class NodeUdp(Node):
         self.serverSocket.close()
         print("I dont feel good Mr Stark...")
 
-    def send(self):
-        #Pregunta por el puerto donde quiere enviar el mensaje
-        serverName = input("\nGive me your bruhh's IP: ")
-        serverMascara = input("\nGive me your bruhh's Mascara: ")
-        serverPort = int(input("\nGive me the port: "))
-        address = (serverName, serverPort)
-
+    def send(self,otherAddress):
         #Crea la conexión con el servidor
         clientSocket = socket(AF_INET, SOCK_DGRAM)
 
