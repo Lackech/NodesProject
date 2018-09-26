@@ -32,7 +32,7 @@ class Application:
 
 
     def execute(self):
-        self.nodesCreation()
+        self.nodeCreation()
         self.nodeExecution()
 
 
