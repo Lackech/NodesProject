@@ -11,7 +11,7 @@ class NodeTcp(Node):
     def __init__(self, serverAddress):
         Node.__init__(self, serverAddress)
         self.serverSocket = socket(AF_INET, SOCK_STREAM)
-        self.encryptor = Bitnator()
+
         self.currentConnection = {}
         self.alive = True
         self.listener = threading.Thread(target=self.listen)
@@ -53,6 +53,7 @@ class NodeTcp(Node):
                         #self.decrypt(sentence, clientAddress)
                         print("Ya llegue")
                         self.encryptor.bitDecrypt(sentence,clientAddress)
+
                         #Da una respuesta al cliente
                 else:
                     raise error('Client disconnected')
