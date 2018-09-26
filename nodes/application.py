@@ -32,7 +32,7 @@ class Application:
 
 
     def execute(self):
-        self.nodesCreation()
+        self.nodeCreation()
         self.nodeExecution()
 
 
@@ -51,6 +51,7 @@ class Application:
             self.interface.showMessage(self.TcpMessage)
             nodeAddress = self.getNodeInformation()
             self.node = NodeTcp(nodeAddress)
+            self.nodeExecution()
 
         else:
             if nodeType is 2:
@@ -64,7 +65,7 @@ class Application:
         while self.node.alive:
             nodeOption = 0
             while nodeOption is 0:
-                nodeOption = self.isValid(self.interface.getInput(self.connectionTypeMessage), ["1", "2", "3", "4", "5"])
+                nodeOption = self.isValid(self.interface.getInput(self.nodeMessage), ["1", "2", "3", "4", "5"])
 
                 if nodeOption is 0:
                     self.interface.showMessage(self.errorMessage)
@@ -72,7 +73,7 @@ class Application:
             if nodeOption is 1:
             # El nodo va a enviar un mensaje
                 otherAddress = self.getNodeInformation()
-                self.node.send(otherAddress)
+                self.node.send(otherAddress[0],otherAddress[1])
             else:
                 if nodeOption is 2:
                 # El nodo va a mostrar la table de alcanzabilidad
@@ -95,10 +96,10 @@ class Application:
         valid = 0
         i = 1
         for option in posibleOptions:
-            if argument is option:
+            if argument == option:
                 valid = i
                 break
-            ++i
+            i += 1
 
         return valid
 
@@ -113,8 +114,8 @@ class Application:
 
         nodePort = -1
         while self.router.validPort(nodePort) is False:
-            nodePort = int(self.interface.getInput(self.nodeIpMessage))
-            if self.router.validIp(nodePort) is False:
+            nodePort = self.interface.getInput(self.nodePortMessage)
+            if self.router.validPort(int(nodePort)) is False:
                 self.interface.showMessage(self.errorMessage)
 
         return (nodeIp,int(nodePort))

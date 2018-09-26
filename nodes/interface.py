@@ -4,4 +4,5 @@ class Interface:
         print(message)
 
     def getInput(self,message):
-        input(message)
+        option = input(message)
+        return option

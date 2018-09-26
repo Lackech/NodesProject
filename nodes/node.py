@@ -1,5 +1,6 @@
 import os
 import sys
+from nodes.bitnator import *
 
 class Node:
 
@@ -8,12 +9,13 @@ class Node:
         self.serverIp = serverAddress[0]
         self.serverPort = serverAddress[1]
         self.reachabilityTable = {}
+        self.encryptor = Bitnator(self)
 
     def listen(self):
         #Debe ser sobreescrito por el método del nodo hijo
         pass
 
-    def send(self):
+    def send(self,serverName,serverPort):
         # Debe ser sobreescrito por el método del nodo hijo
         pass
 

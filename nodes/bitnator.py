@@ -1,4 +1,8 @@
+from nodes.node import *
 class Bitnator:
+
+    def __init__(self, node):
+        self.node = node
 
     def bitDecrypt(self, packetMessage, senderAddress):
         # Optenemos la cantidad de mensajes recibidos
@@ -30,7 +34,8 @@ class Bitnator:
             print(costNum)
 
             # Guardamos en la tabla de alcanzabilidad
-            self.saveDataTable(address, maskNum, costNum, senderAddress)
+            self.node.saveDataTable(address,maskNum,costNum,senderAddress)
+            #self.saveDataTable(address, maskNum, costNum, senderAddress)
 
     # Método para codificar mensaje
     def bitEncript(self):

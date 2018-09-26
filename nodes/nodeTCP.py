@@ -1,6 +1,9 @@
 from nodes.node import *
 from socket import *
+from nodes.bitnator import *
+from nodes.application import *
 import threading
+
 
 
 class NodeTcp(Node):
@@ -8,11 +11,14 @@ class NodeTcp(Node):
     def __init__(self, serverAddress):
         Node.__init__(self, serverAddress)
         self.serverSocket = socket(AF_INET, SOCK_STREAM)
+
         self.currentConnection = {}
+        self.alive = True
         self.listener = threading.Thread(target=self.listen)
         self.listener.start()
 
-        self.alive = True
+
+
 
     def listen(self):
         self.serverSocket.bind((self.serverIp, self.serverPort))
@@ -44,7 +50,10 @@ class NodeTcp(Node):
                                 self.reachabilityTable.pop(addr)
                     else:
                         #Decodifica la información
-                        self.decrypt(sentence, clientAddress)
+                        #self.decrypt(sentence, clientAddress)
+                        print("Ya llegue")
+                        self.encryptor.bitDecrypt(sentence,clientAddress)
+
                         #Da una respuesta al cliente
                 else:
                     raise error('Client disconnected')
@@ -52,11 +61,11 @@ class NodeTcp(Node):
                 connectionSocket.close()
                 return False
 
-    def send(self):
+    def send(self,serverName,serverPort):
         #Pregunta por el puerto donde quiere enviar el mensaje
-        serverName = input("\nGive me your bruhh's IP: ")
-        serverMascara = input("\nGive me your bruhh's Mascara: ")
-        serverPort = int(input("\nGive me the port: "))
+        #serverName = input("\nGive me your bruhh's IP: ")
+        #serverMascara = input("\nGive me your bruhh's Mascara: ")
+        #serverPort = int(input("\nGive me the port: "))
         address = (serverName, serverPort)
 
         #Verifica si existe una conexión, de no ser así la crea y la guarda
@@ -74,7 +83,9 @@ class NodeTcp(Node):
 
 
         #Envía un mensaje codificado
-        clientSocket.send(self.encode().encode('utf-8'))
+        #clientSocket.send(self.encode().encode('utf-8'))
+        clientSocket.send(self.encryptor.bitEncript().encode('utf-8'))
+
 
 
 
