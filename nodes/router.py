@@ -1,12 +1,12 @@
 class Router:
 
-    def validIP(self, ipAdress):
+    def validIp(self, ipAdress):
         valid = True
         ipSection = ipAdress.split('.')
 
-        if ipSection.length() is 4:
+        if len(ipSection) is 4:
             for section in ipSection:
-                if section < 0 or section > 255:
+                if int(section) < 0 or int(section) > 255:
                     valid = False
                     break
         else:
@@ -19,7 +19,7 @@ class Router:
     def validPort(self, portAddress):
         valid = True
 
-        if portAddress < 1024 or portAddress > 60000:
+        if int(portAddress) < 1024 or int(portAddress) > 60000:
             valid = False
 
         return valid
