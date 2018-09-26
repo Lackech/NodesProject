@@ -2,11 +2,11 @@ from nodes.node import *
 from socket import *
 import threading
 
-class nodeUDP(Node):
+class NodeUdp(Node):
 
     # constructor del nodo
-    def __init__(self, serverIp, serverPort):
-        Node.__init__(self, serverIp, serverPort)
+    def __init__(self, serverAddress):
+        Node.__init__(self, serverAddress)
         self.serverSocket = socket(AF_INET, SOCK_DGRAM)
         self.currentConnection = []
         self.listener = threading.Thread(target=self.listen)
@@ -29,13 +29,7 @@ class nodeUDP(Node):
         self.serverSocket.close()
         print("I dont feel good Mr Stark...")
 
-    def send(self):
-        #Pregunta por el puerto donde quiere enviar el mensaje
-        serverName = input("\nGive me your bruhh's IP: ")
-        serverMascara = input("\nGive me your bruhh's Mascara: ")
-        serverPort = int(input("\nGive me the port: "))
-        address = (serverName, serverPort)
-
+    def send(self,otherAddress):
         #Crea la conexión con el servidor
         clientSocket = socket(AF_INET, SOCK_DGRAM)
 
