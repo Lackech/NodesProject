@@ -1,4 +1,5 @@
 from nodes.nodeTCP import *
+from nodes.nodeUDP import *
 
 
 def menu():
@@ -18,9 +19,8 @@ if __name__ == '__main__':
 
         menu()
         opcionMenu = input("Now choose: ")
-
-        if opcionMenu == "node-pseudoBGP IP port":
-            str = opcionMenu.split(" ")
+        str = opcionMenu.split(" ")
+        if str[0] == "node-pseudoBGP":
             serverIp = str[1]
             serverPort = int(str[2])
             node = nodeTCP(serverIp, serverPort)
@@ -29,11 +29,11 @@ if __name__ == '__main__':
             node.nodeMenu()
 
 
-        elif opcionMenu == "node-intAS IP port":
+        elif str[0] == "node-intAS":
             str = opcionMenu.split(" ")
             serverIp = str[1]
             serverPort = int(str[2])
-            node = nodeTCP(serverIp, serverPort)
+            node = nodeUDP(serverIp, serverPort)
             print("")
             input("Create an UDP node\nPress any key to continue")
             node.nodeMenu()

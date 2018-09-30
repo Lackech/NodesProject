@@ -1,23 +1,29 @@
 from nodes.node import *
 from socket import *
+from nodes.bitnator import *
+from nodes.application import *
 import threading
 
 
-class nodeTCP(Node):
 
-    def __init__(self, serverIp, serverPort):
-        Node.__init__(self, serverIp, serverPort)
+class NodeTcp(Node):
+
+    def __init__(self, serverAddress):
+        Node.__init__(self, serverAddress)
         self.serverSocket = socket(AF_INET, SOCK_STREAM)
+
         self.currentConnection = {}
+        self.alive = True
         self.listener = threading.Thread(target=self.listen)
         self.listener.start()
 
-        self.alive = True
+
+
 
     def listen(self):
         self.serverSocket.bind((self.serverIp, self.serverPort))
         self.serverSocket.listen(1)
-        print("The server is listening and ready to receive\n\n")
+        print("The server is listening and ready to receive")
         while self.alive:
             connectionSocket, addr = self.serverSocket.accept()
             self.currentConnection[addr] = connectionSocket
@@ -28,43 +34,62 @@ class nodeTCP(Node):
 
 
     # Escucha cada conexion para procesar el mensaje
-    def listenMessage(self, connectionSocket):
+    def listenMessage(self, connectionSocket, clientAddress):
         while True:
             try:
                 #Optiene la información, sí es que la hay
-                data = connectionSocket.recv(1024)
-                if data:
-                    #Decodifica la información
-                    pass
-                    #Da una respuesta al cliente
+                sentence = connectionSocket.recv(1024)
+                if sentence:
+                    #Preguntamos el tamaño del mensaje
+                    if len(sentence) is 8:
+                        #Si es de tamaño 8 quiere decir que el address que envio el mensaje murió
+                        self.currentConnection.pop(clientAddress)
+                        copy = self.reachabilityTable.copy()
+                        for addr in copy:
+                            value = self.reachabilityTable.get(addr)
+                            if value[1] == clientAddress:
+                                self.reachabilityTable.pop(addr)
+                    else:
+                        #Decodifica la información
+                        #self.decrypt(sentence, clientAddress)
+                        print("Ya llegue")
+                        self.encryptor.bitDecrypt(sentence,clientAddress)
+
+                        #Da una respuesta al cliente
                 else:
                     raise error('Client disconnected')
             except:
                 connectionSocket.close()
                 return False
 
-    def send(self):
+    def send(self,otherAddress,message):
         #Pregunta por el puerto donde quiere enviar el mensaje
-        serverName = input("\nGive me your bruhh's IP: ")
-        serverMascara = input("\nGive me your bruhh's Mascara: ")
-        serverPort = int(input("\nGive me the port: "))
-        address = (serverName, serverPort)
+        #serverName = input("\nGive me your bruhh's IP: ")
+        #serverMascara = input("\nGive me your bruhh's Mascara: ")
+        #serverPort = int(input("\nGive me the port: "))
 
         #Verifica si existe una conexión, de no ser así la crea y la guarda
-        if self.currentConnection[address] is None:
-            clientSocket = socket(AF_INET, SOCK_STREAM)
-            clientSocket.connect((serverName, serverPort))
-            self.currentConnection[address] = clientSocket
+        if otherAddress in self.currentConnection:
+            print('Connection exist')
+            clientSocket = self.currentConnection[otherAddress]
         else:
-            clientSocket = self.currentConnection[address]
+            print('New connection')
+            clientSocket = socket(AF_INET, SOCK_STREAM)
+            clientSocket.connect((otherAddress[0], otherAddress[1]))
+            self.currentConnection[otherAddress] = clientSocket
+
+            #Creamos un hilo para escuchar lo que responda la conexión.
+            threading.Thread(target=self.listenMessage, args=(clientSocket, otherAddress)).start()
+
 
         #Envía un mensaje codificado
-        clientSocket.send(self.encode().encode('utf-8'))
-        #Creamos un hilo para escuchar lo que responda la conexión.
-        threading.Thread(target=self.listenMessage, args=(clientSocket, address)).start()
+        #clientSocket.send(self.encode().encode('utf-8'))
+        clientSocket.send(self.encryptor.bitEncript().encode('utf-8'))
 
 
-    # Método para borrar un nodo
+
+
+    #Método para borrar un nodo
     def kill(self):
         # Matamos el servidor
         self.alive = False

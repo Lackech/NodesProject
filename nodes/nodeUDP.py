@@ -1,12 +1,12 @@
-from nodes.Node import Node
+from nodes.node import *
 from socket import *
 import threading
 
-class nodeUDP(Node):
+class NodeUdp(Node):
 
     # constructor del nodo
-    def __init__(self, serverIp, serverPort):
-        Node.__init__(self, serverIp, serverPort)
+    def __init__(self, serverAddress):
+        Node.__init__(self, serverAddress)
         self.serverSocket = socket(AF_INET, SOCK_DGRAM)
 
 
@@ -23,24 +23,19 @@ class nodeUDP(Node):
             sentence, clientAddress = self.serverSocket.recvfrom(2048)
 
             #Decodificamos el mensaje recibido
+            self.decrypt(sentence,clientAddress)
 
             #Retornamos una respuesta
 
+        self.serverSocket.close()
         print("I dont feel good Mr Stark...")
 
-    def send(self):
-        #Pregunta por el puerto donde quiere enviar el mensaje
-        serverName = input("\nGive me your bruhh's IP: ")
-        serverMascara = input("\nGive me your bruhh's Mascara: ")
-        serverPort = int(input("\nGive me the port: "))
-        address = (serverName, serverPort)
-
+    def send(self,otherAddress):
         #Crea la conexión con el servidor
         clientSocket = socket(AF_INET, SOCK_DGRAM)
 
         #Envía un mensaje codificado
         clientSocket.sendto(self.encode().encode('utf-8'), address)
-        self.currentConnection.append(address)
         #Cerramos la conexión
         clientSocket.close()
 
@@ -48,11 +43,3 @@ class nodeUDP(Node):
     def kill(self):
         #Matamos el servidor
         self.alive = False
-
-        #Creamos el socket para enviar mensajes de que está mueriendo
-        clientSocket = socket(AF_INET, SOCK_DGRAM)
-        for address in self.currentConnection:
-            #Enviamos los mensajes a los diferentes address
-            clientSocket.sendto('00000000'.encode('utf-8'), address)
-
-        clientSocket.close()
