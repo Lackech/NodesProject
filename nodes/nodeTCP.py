@@ -32,6 +32,7 @@ class NodeTcp(Node):
         self.serverSocket.close()
         print("I dont feel good Mr Stark...")
 
+
     # Escucha cada conexion para procesar el mensaje
     def listenMessage(self, connectionSocket, clientAddress):
         while True:

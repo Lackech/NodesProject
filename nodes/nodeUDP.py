@@ -8,7 +8,8 @@ class NodeUdp(Node):
     def __init__(self, serverAddress):
         Node.__init__(self, serverAddress)
         self.serverSocket = socket(AF_INET, SOCK_DGRAM)
-        self.currentConnection = []
+
+
         self.listener = threading.Thread(target=self.listen)
         self.listener.start()
 
