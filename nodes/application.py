@@ -17,9 +17,11 @@ class Application:
         self.TcpMessage = "Great!! You choosed to create a TCP node"
         self.UdpMessage = "Interesting...You choosed to create a UDP node"
 
-        self.nodeIpMessage = "\tWrite a valid Node's IP:"
-        self.nodePortMessage = "\tWrite a valid Node's Port:"
-        self.nodeMascaraMessage = "\tWrite a valid Node's Mascara:"
+        self.numberOfElementsMessage = "Select the number of elements: "
+        self.nodeIpMessage = "\tWrite a valid Node's IP: "
+        self.nodePortMessage = "\tWrite a valid Node's Port: "
+        self.nodeMascaraMessage = "\tWrite a valid Node's Mascara: "
+        self.nodeCostMessage = "\tWrite a valid Node's Cost: "
 
         self.nodeMessage = ("Please write the number of the one you want to do:\n"
                             "\t1. Send message\n"
@@ -74,7 +76,8 @@ class Application:
             if nodeOption is 1:
             # El nodo va a enviar un mensaje
                 otherAddress = self.getNodeInformation()
-                self.node.send(otherAddress)
+                messageList = self.optainSendingMessage()
+                self.node.send(otherAddress,messageList)
             else:
                 if nodeOption is 2:
                 # El nodo va a mostrar la table de alcanzabilidad
@@ -106,19 +109,79 @@ class Application:
 
 
 
-    def getNodeInformation(self):
+    def optainNodeIp(self):
         nodeIp = ""
         while self.router.validIp(nodeIp) is False:
             nodeIp = self.interface.getInput(self.nodeIpMessage)
             if self.router.validIp(nodeIp) is False:
                 self.interface.showMessage(self.errorMessage)
 
+        return nodeIp
+
+    def optainNodePort(self):
         nodePort = -1
         while self.router.validPort(nodePort) is False:
-            nodePort = self.interface.getInput(self.nodePortMessage)
-            if self.router.validPort(int(nodePort)) is False:
+            nodePort = int(self.interface.getInput(self.nodePortMessage))
+            if self.router.validPort(nodePort) is False:
                 self.interface.showMessage(self.errorMessage)
 
-        return (nodeIp,int(nodePort))
+        return nodePort
 
-    
+    def optainNodeMascara(self):
+        nodeMascara = -1
+        while self.router.validMascar(nodeMascara) is False:
+            nodeMascara = int(self.interface.getInput(self.nodeMascaraMessage))
+            if self.router.validMascar(nodeMascara) is False:
+                self.interface.showMessage(self.errorMessage)
+
+        return int(nodeMascara)
+
+    def optainNodeCost(self):
+        nodeCost = -1
+        while nodeCost < 0:
+            nodeCost = int(self.interface.getInput(self.nodeCostMessage))
+            if nodeCost < 0:
+                self.interface.showMessage(self.errorMessage)
+
+        return nodeCost
+
+    def optainValidNumber(self):
+        numberOfElements = -1
+        while numberOfElements <= 0:
+            numberOfElements = int(self.interface.getInput(self.numberOfElementsMessage))
+            if numberOfElements <= 0:
+                self.interface.showMessage(self.errorMessage)
+
+        return numberOfElements
+
+
+
+    def getNodeInformation(self):
+        nodeIp = self.optainNodeIp()
+        nodePort = self.optainNodePort()
+        nodeAddress = (nodeIp,nodePort)
+        return nodeAddress
+
+
+
+    def optainSendingMessage(self):
+        messageList = []
+
+        numberOfElements = self.optainValidNumber()
+        messageList.append(numberOfElements)
+
+        for i in range(0, numberOfElements):
+        #Optenemos la informacion que va a contener el mensaje
+
+            #Optienemos el IP
+            nodeIp = self.optainNodeIp()
+            #Optenemos la mascara
+            nodeMascara = self.optainNodeMascara()
+            #Optenemos el costo
+            nodeCost = self.optainNodeCost()
+
+            #Lo agregamos a la lista qu tiene la informacion del mensaje
+            data = (nodeIp,nodeMascara,nodeCost)
+            messageList.append(data)
+
+        return messageList

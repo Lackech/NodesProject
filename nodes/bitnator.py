@@ -38,17 +38,19 @@ class Bitnator:
             #self.saveDataTable(address, maskNum, costNum, senderAddress)
 
     # Método para codificar mensaje
-    def bitEncript(self):
-        numberOfElements = int(input("Select the number of elements:"))
-        bytestring = '{0:016b}'.format(numberOfElements)
+    def bitEncript(self,messageList):
+        numberOfElements = messageList.pop(0)
+        bytestring = numberOfElements.to_bytes(2,'big')
 
         for i in range(0, numberOfElements):
-            ipAdress = input("Write the Ip adress:")
-            stringIp = ipAdress.split('.')
-            for s in stringIp:
-                bytestring += '{0:08b}'.format(int(s))
+            message = messageList.pop()
+            ipAdress = message[0]
+            ipParts = ipAdress.split('.')
+            for s in ipParts:
+                bytestring += int(s).to_bytes(1,'big')
 
-            bytestring += '{0:08b}'.format(int(input("Write the Mascara adress:")))
-            bytestring += '{0:024b}'.format(int(input("Write the Cost:")))
+            bytestring += message[1].to_bytes(1,'big')
+            bytestring += message[2].to_bytes(3,'big')
 
+        print(bytestring)
         return bytestring

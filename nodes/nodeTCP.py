@@ -23,7 +23,7 @@ class NodeTcp(Node):
     def listen(self):
         self.serverSocket.bind((self.serverIp, self.serverPort))
         self.serverSocket.listen(1)
-        print("The server is listening and ready to receive")
+
         while self.alive:
             connectionSocket, addr = self.serverSocket.accept()
             self.currentConnection[addr] = connectionSocket
@@ -62,7 +62,7 @@ class NodeTcp(Node):
                 connectionSocket.close()
                 return False
 
-    def send(self,otherAddress,message):
+    def send(self,otherAddress,messageList):
         #Pregunta por el puerto donde quiere enviar el mensaje
         #serverName = input("\nGive me your bruhh's IP: ")
         #serverMascara = input("\nGive me your bruhh's Mascara: ")
@@ -84,7 +84,7 @@ class NodeTcp(Node):
 
         #Envía un mensaje codificado
         #clientSocket.send(self.encode().encode('utf-8'))
-        clientSocket.send(self.encryptor.bitEncript().encode('utf-8'))
+        clientSocket.send(self.encryptor.bitEncript(messageList))
 
 
 

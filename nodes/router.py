@@ -20,7 +20,7 @@ class Router:
     def validPort(self, portAddress):
         valid = True
 
-        if int(portAddress) < 1024 or int(portAddress) > 60000:
+        if portAddress < 1024 or portAddress > 60000:
             valid = False
 
         return valid
@@ -30,7 +30,7 @@ class Router:
     def validMascar(self, mascara):
         valid = True
 
-        if int(mascara) < 0 or int(mascara) > 31:
+        if mascara < 1 or mascara > 31:
             valid = False
 
         return valid
