@@ -6,49 +6,43 @@ class Bitnator:
 
     def bitDecrypt(self, packetMessage, senderAddress):
         # Optenemos la cantidad de mensajes recibidos
-        num = packetMessage.split()[0][:16]
-        n = int(num, 2)
-        print(n)
-        for i in range(0, n):
+        numberOfElements = packetMessage[0]*256 + packetMessage[1]
+        print(numberOfElements)
+        for i in range(0, numberOfElements):
             # Optenemos el Ip
-            num1 = packetMessage[(i * 64) + 8 * 2:(i * 64) + 8 * 3]
-            n1 = int(num1, 2)
-            num2 = packetMessage[(i * 64) + 8 * 3:(i * 64) + 8 * 4]
-            n2 = int(num2, 2)
-            num3 = packetMessage[(i * 64) + 8 * 4:(i * 64) + 8 * 5]
-            n3 = int(num3, 2)
-            num4 = packetMessage[(i * 64) + 8 * 5:(i * 64) + 8 * 6]
-            n4 = int(num4, 2)
+            num1 = packetMessage[i*8+2]
+            num2 = packetMessage[i*8+3]
+            num3 = packetMessage[i*8+4]
+            num4 = packetMessage[i*8+5]
 
-            address = str(n1) + "." + str(n2) + "." + str(n3) + "." + str(n4)
-            print(address)
+            address = str(num1) + "." + str(num2) + "." + str(num3) + "." + str(num4)
 
             # Optenemos la máscara
-            mask = packetMessage[(i * 64) + 8 * 6:(i * 64) + 8 * 7]
-            maskNum = int(mask, 2)
-            print(maskNum)
+            mask = packetMessage[i*8+6]
 
             # Optenemos el costo
-            cost = packetMessage[(i * 64) + 8 * 7:(i * 64) + 8 * 10]
-            costNum = int(cost, 2)
-            print(costNum)
+            cost = packetMessage[i*8+7]*65536 + packetMessage[i*8+8]*256 + packetMessage[i*8+9]
 
             # Guardamos en la tabla de alcanzabilidad
-            self.node.saveDataTable(address,maskNum,costNum,senderAddress)
-            #self.saveDataTable(address, maskNum, costNum, senderAddress)
+            self.node.saveDataTable(address,mask,cost,senderAddress)
+
+
 
     # Método para codificar mensaje
-    def bitEncript(self):
-        numberOfElements = int(input("Select the number of elements:"))
-        bytestring = '{0:016b}'.format(numberOfElements)
+    def bitEncript(self,messageList):
+        numberOfElements = messageList.pop(0)
+        encriptedMessage = bytearray()
+        encriptedMessage += numberOfElements.to_bytes(2,'big')
 
         for i in range(0, numberOfElements):
-            ipAdress = input("Write the Ip adress:")
-            stringIp = ipAdress.split('.')
-            for s in stringIp:
-                bytestring += '{0:08b}'.format(int(s))
+            message = messageList.pop()
+            ipAdress = message[0]
+            ipParts = ipAdress.split('.')
+            for s in ipParts:
+                encriptedMessage += int(s).to_bytes(1,'big')
 
-            bytestring += '{0:08b}'.format(int(input("Write the Mascara adress:")))
-            bytestring += '{0:024b}'.format(int(input("Write the Cost:")))
+            encriptedMessage += message[1].to_bytes(1,'big')
+            encriptedMessage += message[2].to_bytes(3,'big')
 
-        return bytestring
+        print(encriptedMessage)
+        return encriptedMessage
