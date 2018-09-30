@@ -11,21 +11,22 @@ class Application:
         self.router = Router()
         self.node = None
 
-        self.mainMessage = "Please choose a type of connection:\n "
+        self.mainMessage = "Please choose a type of connection:"
 
-        self.connectionTypeMessage = "\tWrite pseudoBGP(TCP) or intAS(UDP):\n"
-        self.TcpMessage = "Great!! You choosed to create a TCP node\n"
-        self.UdpMessage = "Interesting...You choosed to create a UDP node\n"
+        self.connectionTypeMessage = "\tWrite pseudoBGP(TCP) or intAS(UDP): "
+        self.TcpMessage = "Great!! You choosed to create a TCP node"
+        self.UdpMessage = "Interesting...You choosed to create a UDP node"
 
-        self.nodeIpMessage = "\tWrite a valid Node's IP:\n"
-        self.nodePortMessage = "\tWrite a valid Node's Port:\n"
-        self.nodeMascaraMessage = "\tWrite a valid Node's Mascara:\n"
+        self.nodeIpMessage = "\tWrite a valid Node's IP:"
+        self.nodePortMessage = "\tWrite a valid Node's Port:"
+        self.nodeMascaraMessage = "\tWrite a valid Node's Mascara:"
 
         self.nodeMessage = ("Please write the number of the one you want to do:\n"
                             "\t1. Send message\n"
                             "\t2. Show table\n"
                             "\t3. Kill node\n"
-                            "\t4. Create a catastrophe(Exit)\n")
+                            "\t4. Create a catastrophe(Exit)\n"
+                            "\tWrite your option here --> ")
 
         self.errorMessage = "WARNING -- Be sure to choose a valid option"
 
@@ -65,7 +66,7 @@ class Application:
         while self.node.alive:
             nodeOption = 0
             while nodeOption is 0:
-                nodeOption = self.isValid(self.interface.getInput(self.nodeMessage), ["1", "2", "3", "4", "5"])
+                nodeOption = self.isValid(self.interface.getInput(self.nodeMessage), ["1", "2", "3", "4"])
 
                 if nodeOption is 0:
                     self.interface.showMessage(self.errorMessage)
@@ -73,7 +74,7 @@ class Application:
             if nodeOption is 1:
             # El nodo va a enviar un mensaje
                 otherAddress = self.getNodeInformation()
-                self.node.send(otherAddress[0],otherAddress[1])
+                self.node.send(otherAddress)
             else:
                 if nodeOption is 2:
                 # El nodo va a mostrar la table de alcanzabilidad
@@ -119,3 +120,5 @@ class Application:
                 self.interface.showMessage(self.errorMessage)
 
         return (nodeIp,int(nodePort))
+
+    

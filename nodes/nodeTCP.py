@@ -23,7 +23,7 @@ class NodeTcp(Node):
     def listen(self):
         self.serverSocket.bind((self.serverIp, self.serverPort))
         self.serverSocket.listen(1)
-        print("The server is listening and ready to receive\n\n")
+        print("The server is listening and ready to receive")
         while self.alive:
             connectionSocket, addr = self.serverSocket.accept()
             self.currentConnection[addr] = connectionSocket
@@ -61,25 +61,24 @@ class NodeTcp(Node):
                 connectionSocket.close()
                 return False
 
-    def send(self,serverName,serverPort):
+    def send(self,otherAddress,message):
         #Pregunta por el puerto donde quiere enviar el mensaje
         #serverName = input("\nGive me your bruhh's IP: ")
         #serverMascara = input("\nGive me your bruhh's Mascara: ")
         #serverPort = int(input("\nGive me the port: "))
-        address = (serverName, serverPort)
 
         #Verifica si existe una conexión, de no ser así la crea y la guarda
-        if address in self.currentConnection:
+        if otherAddress in self.currentConnection:
             print('Connection exist')
-            clientSocket = self.currentConnection[address]
+            clientSocket = self.currentConnection[otherAddress]
         else:
             print('New connection')
             clientSocket = socket(AF_INET, SOCK_STREAM)
-            clientSocket.connect((serverName, serverPort))
-            self.currentConnection[address] = clientSocket
+            clientSocket.connect((otherAddress[0], otherAddress[1]))
+            self.currentConnection[otherAddress] = clientSocket
 
             #Creamos un hilo para escuchar lo que responda la conexión.
-            threading.Thread(target=self.listenMessage, args=(clientSocket, address)).start()
+            threading.Thread(target=self.listenMessage, args=(clientSocket, otherAddress)).start()
 
 
         #Envía un mensaje codificado

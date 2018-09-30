@@ -2,15 +2,16 @@ class Router:
 
     def validIp(self, ipAdress):
         valid = True
-        ipSection = ipAdress.split('.')
+        if ipAdress != 'localhost':
+            ipSection = ipAdress.split('.')
 
-        if len(ipSection) is 4:
-            for section in ipSection:
-                if int(section) < 0 or int(section) > 255:
-                    valid = False
-                    break
-        else:
-            valid = False
+            if len(ipSection) is 4:
+                for section in ipSection:
+                    if int(section) < 0 or int(section) > 255:
+                        valid = False
+                        break
+            else:
+                valid = False
 
         return valid
 
