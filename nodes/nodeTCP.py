@@ -38,10 +38,10 @@ class NodeTcp(Node):
         while True:
             try:
                 #Optiene la información, sí es que la hay
-                sentence = connectionSocket.recv(1024)
-                if sentence:
+                packetMessage = connectionSocket.recv(1024)
+                if packetMessage:
                     #Preguntamos el tamaño del mensaje
-                    if len(sentence) is 8:
+                    if len(packetMessage) is 1:
                         #Si es de tamaño 8 quiere decir que el address que envio el mensaje murió
                         self.currentConnection.pop(clientAddress)
                         copy = self.reachabilityTable.copy()
@@ -51,9 +51,7 @@ class NodeTcp(Node):
                                 self.reachabilityTable.pop(addr)
                     else:
                         #Decodifica la información
-                        #self.decrypt(sentence, clientAddress)
-                        print("Ya llegue")
-                        self.encryptor.bitDecrypt(sentence,clientAddress)
+                        self.encryptor.bitDecrypt(packetMessage,clientAddress)
 
                         #Da una respuesta al cliente
                 else:
@@ -75,7 +73,7 @@ class NodeTcp(Node):
         else:
             print('New connection')
             clientSocket = socket(AF_INET, SOCK_STREAM)
-            clientSocket.connect((otherAddress[0], otherAddress[1]))
+            clientSocket.connect(otherAddress)
             self.currentConnection[otherAddress] = clientSocket
 
             #Creamos un hilo para escuchar lo que responda la conexión.
@@ -84,7 +82,9 @@ class NodeTcp(Node):
 
         #Envía un mensaje codificado
         #clientSocket.send(self.encode().encode('utf-8'))
+        print(1)
         clientSocket.send(self.encryptor.bitEncript(messageList))
+        print(2)
 
 
 

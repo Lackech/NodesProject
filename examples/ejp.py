@@ -6,6 +6,8 @@ for i in range(0,20):
     #print(decode)
     string = str(i) + 'adf'
     #print(string)
+    print(len(code))
+
 
 for i in range(0,20):
     print(code[i*2]*256 + code[i*2+1])
