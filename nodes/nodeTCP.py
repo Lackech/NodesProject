@@ -10,7 +10,6 @@ class NodeTcp(Node):
         Node.__init__(self, serverAddress)
         self.serverSocket = socket(AF_INET, SOCK_STREAM)
 
-        self.currentConnection = {}
         self.alive = True
 
         self.listener = threading.Thread(name='daemon',target=self.listen)
@@ -26,12 +25,12 @@ class NodeTcp(Node):
         while self.alive:
             connectionSocket, addr = self.serverSocket.accept()
             self.currentConnection[addr] = connectionSocket
+
             t = threading.Thread(name='daemon',target=self.listenMessage, args=(connectionSocket, addr))
             t.setDaemon(True)
             t.start()
 
         self.serverSocket.close()
-        print("I dont feel good Mr Stark...")
 
 
 
@@ -45,7 +44,7 @@ class NodeTcp(Node):
                     #Preguntamos el tamaño del mensaje
                     if len(packetMessage) is 1:
                         #Si es de tamaño 8 quiere decir que el address que envio el mensaje murió
-                        self.closingConnection(connectionSocket,clientAddress)
+                        self.closingConnection(TCP,clientAddress)
                         break
                     else:
                         #Decodifica la información

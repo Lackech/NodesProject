@@ -1,6 +1,8 @@
-import os
-import sys
+import threading
 from nodes.bitnator import *
+
+TCP = 0
+UDP = 1
 
 class Node:
 
@@ -8,7 +10,9 @@ class Node:
     def __init__(self, serverAddress):
         self.serverAddress = serverAddress
         self.reachabilityTable = {}
+        self.currentConnection = {}
         self.encryptor = Bitnator(self)
+        self.lock = threading.Lock()
 
     def listen(self):
         #Debe ser sobreescrito por el método del nodo hijo
@@ -38,13 +42,17 @@ class Node:
 
 
 
-    def closingConnection(self,connectionSocket,clientAddress):
-        print("Deleting data")
-        connectionSocket.close()
-        self.currentConnection.pop(clientAddress)
+    def closingConnection(self,connectionType,clientAddress):
+        self.lock.acquire()
+        try:
+            if connectionType is TCP:
+                connectionSocket = self.currentConnection.pop(clientAddress)
+                connectionSocket.close()
 
-        copy = self.reachabilityTable.copy()
-        for addr in copy:
-            value = self.reachabilityTable.get(addr)
-            if value[1] == clientAddress:
-                self.reachabilityTable.pop(addr)
+            copy = self.reachabilityTable.copy()
+            for addr in copy:
+                value = self.reachabilityTable.get(addr)
+                if value[1] == clientAddress:
+                    self.reachabilityTable.pop(addr)
+        finally:
+            self.lock.release()

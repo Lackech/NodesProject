@@ -9,33 +9,40 @@ class NodeUdp(Node):
         Node.__init__(self, serverAddress)
         self.serverSocket = socket(AF_INET, SOCK_DGRAM)
 
-
-        self.listener = threading.Thread(target=self.listen)
-        self.listener.start()
-
         self.alive = True
 
+        self.listener = threading.Thread(name='daemon',target=self.listen)
+        self.listener.setDaemon(True)
+        self.listener.start()
+
+
+
     def listen(self):
-        self.serverSocket.bind((self.serverIp, self.serverPort))
-        print("Im working")
+        self.serverSocket.bind(self.serverAddress)
 
         while self.alive:
-            sentence, clientAddress = self.serverSocket.recvfrom(2048)
+            packetMessage, clientAddress = self.serverSocket.recvfrom(2048)
 
-            #Decodificamos el mensaje recibido
-            self.decrypt(sentence,clientAddress)
+            if len(packetMessage) is 1:
+                # Si es de tamaño 8 quiere decir que el address que envio el mensaje murió
+                self.closingConnection(UDP, clientAddress)
+                break
+            else:
+                # Decodifica la información
+                self.encryptor.bitDecrypt(packetMessage, clientAddress)
 
-            #Retornamos una respuesta
+                #Retornamos una respuesta
 
         self.serverSocket.close()
         print("I dont feel good Mr Stark...")
 
-    def send(self,otherAddress):
+    def send(self,otherAddress,messageList):
         #Crea la conexión con el servidor
         clientSocket = socket(AF_INET, SOCK_DGRAM)
 
         #Envía un mensaje codificado
-        clientSocket.sendto(self.encode().encode('utf-8'), address)
+        clientSocket.sendto(self.encryptor.bitEncript(messageList),otherAddress)
+
         #Cerramos la conexión
         clientSocket.close()
 
