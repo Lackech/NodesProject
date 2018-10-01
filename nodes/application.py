@@ -17,7 +17,11 @@ class Application:
         self.TcpMessage = "Great!! You choosed to create a TCP node"
         self.UdpMessage = "Interesting...You choosed to create a UDP node"
 
-        self.numberOfElementsMessage = "Select the number of elements: "
+        self.creatingMsgMessage = "Lets write the message!"
+        self.creatingConnectionMessage = "Lests write your Bruh's information"
+        self.unsuccessfulConnectionMessage = "WARNING -- Unable to create connection"
+
+        self.numberOfElementsMessage = "\tSelect the number of elements: "
         self.nodeIpMessage = "\tWrite a valid Node's IP: "
         self.nodePortMessage = "\tWrite a valid Node's Port: "
         self.nodeMascaraMessage = "\tWrite a valid Node's Mascara: "
@@ -75,9 +79,17 @@ class Application:
 
             if nodeOption is 1:
             # El nodo va a enviar un mensaje
-                otherAddress = self.getNodeInformation()
                 messageList = self.optainSendingMessage()
-                self.node.send(otherAddress,messageList)
+                successful = False
+
+                self.interface.showMessage(self.creatingConnectionMessage)
+                while successful is False:
+                    otherAddress = self.getNodeInformation()
+                    successful = self.node.send(otherAddress, messageList)
+
+                    if successful is False:
+                        self.interface.showMessage(self.unsuccessfulConnectionMessage)
+
             else:
                 if nodeOption is 2:
                 # El nodo va a mostrar la table de alcanzabilidad
@@ -165,6 +177,7 @@ class Application:
 
 
     def optainSendingMessage(self):
+        self.interface.showMessage(self.creatingMsgMessage)
         messageList = []
 
         numberOfElements = self.optainValidNumber()

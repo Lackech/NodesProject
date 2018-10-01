@@ -7,7 +7,7 @@ class Bitnator:
     def bitDecrypt(self, packetMessage, senderAddress):
         # Optenemos la cantidad de mensajes recibidos
         numberOfElements = packetMessage[0]*256 + packetMessage[1]
-        print(numberOfElements)
+
         for i in range(0, numberOfElements):
             # Optenemos el Ip
             num1 = packetMessage[i*8+2]
@@ -44,5 +44,4 @@ class Bitnator:
             encriptedMessage += message[1].to_bytes(1,'big')
             encriptedMessage += message[2].to_bytes(3,'big')
 
-        print(encriptedMessage)
         return encriptedMessage
