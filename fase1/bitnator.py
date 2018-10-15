@@ -1,4 +1,4 @@
-from nodes.node import *
+from fase1.node import *
 class Bitnator:
 
     def __init__(self, node):

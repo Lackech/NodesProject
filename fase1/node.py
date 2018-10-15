@@ -1,5 +1,5 @@
 import threading
-from nodes.bitnator import *
+from fase1.bitnator import *
 
 TCP = 0
 UDP = 1
