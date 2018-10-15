@@ -1,7 +1,7 @@
-from nodes.nodeTCP import *
-from nodes.nodeUDP import *
-from nodes.interface import *
-from nodes.router import *
+from fase1.nodeTCP import *
+from fase1.nodeUDP import *
+from fase1.interface import *
+from fase1.router import *
 
 class Application:
 

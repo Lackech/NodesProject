@@ -1,5 +1,5 @@
-from nodes.nodeTCP import *
-from nodes.nodeUDP import *
+from fase1.nodeTCP import *
+from fase1.nodeUDP import *
 
 
 def menu():
