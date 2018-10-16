@@ -1,12 +1,10 @@
-from fase1.node import *
 from socket import *
 import threading
 
-class NodeUdp(Node):
+class NodeUdp:
 
     # constructor del nodo
     def __init__(self, serverAddress):
-        Node.__init__(self, serverAddress)
         self.serverSocket = socket(AF_INET, SOCK_DGRAM)
 
         self.alive = True

@@ -1,3 +1,4 @@
+from fase2.messageGenerator import *
 from fase2.nodeUDP import *
 from fase2.interface import *
 from fase2.router import *
@@ -8,32 +9,38 @@ class Application:
     def __init__(self):
         self.interface = Interface()
         self.router = Router()
+        self.messageGenerator = MessageGenerator()
         self.node = None
 
         self.greetingMessage = ("Welcome to our Face 2 application!!"
                                 "\tLets proceed and create your UDP node...")
 
-        self.nodeIpMessage = "\tWrite your Node's IP: "
-
-        self.nodePortMessage = "\tWrite your Node's Port: "
-        self.nodePortMessage = "\tWrite your Node's Port: "
-        self.nodeMascaraMessage = "\tWrite your Node's Mascara: "
-
-        self.connectingPortMessage = "\tWrite the new connection Node's Port: "
-        self.connectingPortMessage = "\tWrite new connection Node's Port: "
-        self.connectingMascaraMessage = "\tWrite new connection Node's Mascara: "
+        self.ipMessage = "\tWrite the Node's Ip: "
+        self.portMessage = "\tWrite Node's Port: "
+        self.mascaraMessage = "\tWrite Node's Mascara: "
 
         self.warningMessage = "\tWARNING -- \""
         self.invalidIpMessage = "\" -- is not a valid IP"
         self.invalidPortMessage = "\" -- is not a valid Port"
-        self.invalidMascarMessage = "\" -- is not a valid Mascara"
+        self.invalidMascaraMessage = "\" -- is not a valid Mascara"
+        self.invalidOptionMessage = "\" -- is not a valid Option"
+        self.invalidNodeMessage = "\" -- is not reachable in this moment try again later"
 
-        self.nodeMessage = ("Please write the number of the one you want to do:\n"
-                            "\t1. Send message\n"
-                            "\t2. Show table\n"
-                            "\t3. Kill node\n"
-                            "\t4. Create a catastrophe(Exit)\n"
+        self.nodeOptionMessage = ("Please write the number of the one you want to do:\n"
+                            "\t1. Start connection\n"
+                            "\t2. Send a trial message\n"
+                            "\t3. Close a connection\n"
+                            "\t4. Close all connection\n"
+                            "\t5. Show the log history\n"
                             "\tWrite your option here --> ")
+
+        self.createConnectionMessage = "Greate!! Lets create this new connection..."
+        self.sendTrialMessage = "Ok, lets send a random message"
+        self.closeConnectionMessage = "Well, if you want to close a connection, lets do it"
+        self.closeConnectionMessage = "Closing all connections..."
+
+        self.listOfConnectionMessage = "Please choose one of the following connections:\n"
+
 
 
 
@@ -55,52 +62,72 @@ class Application:
 
     def nodeExecution(self):
         while self.node.alive:
-            nodeOption = 0
-            while nodeOption is 0:
-                nodeOption = self.isValid(self.interface.getInput(self.nodeMessage), ["1", "2", "3", "4"])
 
-                if nodeOption is 0:
-                    self.interface.showMessage(self.errorMessage)
+            nodeOption = self.interface.getInput(self.nodeOptionMessage)
+            while self.isValid(nodeOption, 5) is False:
+                self.interface.showMessage(self.warningMessage + nodeOption + self.invalidOptionMessage)
+                nodeOption = self.interface.getInput(self.nodeOptionMessage)
 
             if nodeOption is 1:
-            # El nodo va a enviar un mensaje
-                messageList = self.optainSendingMessage()
-                successful = False
+            # El nodo va a iniciar una conexion
+                self.interface.showMessage(self.createConnectionMessage)
 
-                self.interface.showMessage(self.creatingConnectionMessage)
-                while successful is False:
-                    otherAddress = self.getNodeInformation()
-                    successful = self.node.send(otherAddress, messageList)
-
-                    if successful is False:
-                        self.interface.showMessage(self.unsuccessfulConnectionMessage)
+                connectingNodeAddress = self.getNodeInformation()
+                while self.node.startConnection(connectingNodeAddress) is False:
+                    self.interface.showMessage(self.warningMessage + "(" + connectingNodeAddress[0] + "," + connectingNodeAddress[1] + ")" + self.invalidNodeMessage)
+                    connectingNodeAddress = self.getNodeInformation()
 
             else:
                 if nodeOption is 2:
-                # El nodo va a mostrar la table de alcanzabilidad
-                    for network in self.node.reachabilityTable:
-                        print(network, self.node.reachabilityTable[network])
+                # El nodo va a enviar un mensaje aleatorio a una de sus conexiones
+                    self.interface.showMessage(self.sendTrialMessage)
+
+                    connectingOption = self.interface.getInput(
+                        self.listOfConnectionMessage + self.node.getConnectionList)
+
+                    while self.isValid(connectingOption,self.node.numOpenConnections) is False:
+                        self.interface.showMessage(self.warningMessage + connectingOption + self.invalidOptionMessage)
+                        connectingOption = self.interface.getInput(
+                            self.listOfConnectionMessage + self.node.getConnectionList)
+
+                    message = self.messageGenerator.randomMessage()
+                    self.node.send(connectingOption,message)
 
                 else:
                     if nodeOption is 3:
-                    # El nodo va a morir
-                        self.node.kill()
+                    # El nodo va a cerrar una de sus conexiones
+                        self.interface.showMessage(self.closeConnectionMessage)
+
+                        connectingOption = self.interface.getInput(
+                            self.listOfConnectionMessage + self.node.getConnectionList)
+
+                        while self.isValid(connectingOption, self.node.numOpenConnections) is False:
+                            self.interface.showMessage(self.warningMessage + connectingOption + self.invalidOptionMessage)
+                            connectingOption = self.interface.getInput(
+                                self.listOfConnectionMessage + self.node.getConnectionList)
+
+                        self.node.close(connectingOption)
 
                     else:
                         if nodeOption is 4:
-                        # Finaliza todo de golpe
+                        # Cierra todas las conexiones
                             self.node.alive = 0
+                            self.node.closeAll = 0
+
+                        else:
+                        # Muestra la informacion que hay en el log
+                            self.interface.showMessage(self.node.getLogHistory())
 
 
 
-    def isValid(self, argument, posibleOptions):
-        valid = 0
-        i = 1
-        for option in posibleOptions:
-            if argument == option:
-                valid = i
-                break
-            i += 1
+    def isValid(self, argument, numberOfOptions):
+        valid = True
+
+        try:
+            if argument <= 0 and argument > numberOfOptions:
+                valid = False
+        except:
+            valid = False
 
         return valid
 
@@ -109,16 +136,16 @@ class Application:
     def optainNodeIp(self):
         nodeIp = ""
         while self.router.validIp(nodeIp)[0] is False:
-            nodeIp = self.interface.getInput(self.nodeIpMessage)
+            nodeIp = self.interface.getInput(self.ipMessage)
             if self.router.validIp(nodeIp)[0] is False:
-                self.interface.showMessage(self.errorMessage)
+                self.interface.showMessage(self.warningMessage + nodeIp + self.invalidIpMessage)
 
         return nodeIp
 
     def optainNodePort(self):
         nodePort = -1
         while self.router.validPort(nodePort) is False:
-            nodePort = self.interface.getInput(self.nodePortMessage)
+            nodePort = self.interface.getInput(self.portMessage)
 
             if self.router.validPort(nodePort) is False:
                 self.interface.showMessage(self.warningMessage + nodePort + self.invalidPortMessage)
@@ -128,7 +155,7 @@ class Application:
     def optainNodeMascara(self,tipoRed):
         nodeMascara = -1
         while self.router.validMascara(nodeMascara,tipoRed) is False:
-            nodeMascara = self.interface.getInput(self.nodeMascaraMessage)
+            nodeMascara = self.interface.getInput(self.mascaraMessage)
 
             if self.router.validMascara(nodeMascara,tipoRed) is False:
                 self.interface.showMessage(self.warningMessage + nodeMascara + self.invalidMascaraMessage)
