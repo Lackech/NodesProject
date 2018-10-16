@@ -1,4 +1,5 @@
 from fase2.nodeUDP import *
+
 class Bitnator:
 
     def __init__(self, node):

@@ -106,13 +106,13 @@ class Application:
                             connectingOption = self.interface.getInput(
                                 self.listOfConnectionMessage + self.node.getConnectionList)
 
-                        self.node.close(connectingOption)
+                        self.node.closeConnection(connectingOption)
 
                     else:
                         if nodeOption is 4:
                         # Cierra todas las conexiones
                             self.node.alive = 0
-                            self.node.closeAll = 0
+                            self.node.closeAllConnection()
 
                         else:
                         # Muestra la informacion que hay en el log
