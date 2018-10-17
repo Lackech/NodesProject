@@ -7,7 +7,7 @@ class Bitnator:
     def __init__(self, node):
         self.node = node
 
-    def encryptConnectPacket(self,myAddress,otherAddress,SYN,ACK):
+    def encryptPacket(self,myAddress,otherAddress,flag, data1, data2):
         packet = bytearray()
 
         packet += self.encryptAddress(myAddress)
@@ -15,8 +15,15 @@ class Bitnator:
 
         packet += int(0).to_bytes(1, 'big')
 
-        packet += SYN.to_bytes(1, 'big')
-        packet += ACK.to_bytes(1, 'big')
+        packet += data1.to_bytes(1, 'big')
+
+        try:
+            packet += data1.to_bytes(1, 'big')
+        except:
+            packet += ord(data1).to_bytes(1, 'big')
+
+        return packet
+
 
 
     def encryptAddress(self,addres):
@@ -32,6 +39,8 @@ class Bitnator:
 
         return encriptedAddres
 
+
+
     def decryptPacket(self, packet):
         packetParts = []
 
@@ -43,6 +52,8 @@ class Bitnator:
 
         packetParts.append(packet[14])
         packetParts.append(packet[15])
+
+
 
     def decryptHeader(self,packet):
         headerParts = []
