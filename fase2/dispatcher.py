@@ -32,11 +32,23 @@ class dispatcher:
 
     # El dispatcher se quedara escuchando por mensajes nuevos mediante un thread
     def listen(self):
-        pass
+        listenMessageThread = Thread(target=self.listenMessage)
+        listenMessageThread.setDaemon(True)
+        listenMessageThread.start()
 
     # Inicia escucha de mensajes, revisa que empiece el handshake
     def listenMessage(self):
-        pass
+        while True:
+            # Es distinto cuando escucha un nodo creado a cuando un cliente se conecta y queda escuchando
+            # por una respuesta por lo que se debe manejar eso por aqui
+
+            # Recibo el paquete mediante el socket UDP
+            packetMessage, clientAddress = self.serverSocket.recvfrom(2048)
+
+            # Debo analizar el paquete y si el SYN Flag esta encendido, debo procesar handshake
+            # Puede ser que sea solo el SYN o con el ACK para aceptar la conexion
+            # Si no tiene el SYN Flag encendido, puede ser un mensaje de datos o de fin de comunicacion
+
 
     # El cliente crea la conexion con la info del destino
     def connect(self):
@@ -58,5 +70,11 @@ class dispatcher:
     def accept(self):
         pass
 
+    # Analiza el paquete, revisando el RN y SN y tomando la accion adecuada.
+    def debugPacket(self,packetMessage):
+        pass
 
-
+    # Una vez que se detecto el SYN Flag encendio en el paquete se pasa a este metodo para procesarlo
+    # El paquete puede ser solo el SYN o el SYN y el ACK.
+    def processHandshake(self,packetMessage):
+        pass
