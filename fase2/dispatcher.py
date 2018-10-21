@@ -51,7 +51,7 @@ class dispatcher:
 
 
     # El cliente crea la conexion con la info del destino
-    def connect(self):
+    def connect(self, ipAddress, port):
         pass
 
     # Se recibe el mensaje completo en el nodo, por lo que se revisa por paquete

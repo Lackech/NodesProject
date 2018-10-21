@@ -1,0 +1,12 @@
+Inicialmente se creara un nodo el cual se quedara escuchando por conexiones nuevas.
+Al crear el nodo se inicializan varios valores, se guarda su IP y puerto, y se corre un
+thread con el metodo listen.
+El thread listen crea una instancia del dispatcher(socket) y se ejecuta el listen del socket.
+El listen del socket corre un thread para quedarse escuchando por mensajes nuevos. Este thread
+utiliza el socket UDP del dispatcher para recibir paquetes y decidir que hacer, dependiendo de los flags.
+Dado que el listen del socket es un thread, el listen del nodo sigue ejecutandose,aceptando y
+esperando nuevas conexiones mediante otro thread. Este nuevo thread debe ser un ciclo que escuche hasta
+la muerte los mensajes entrantes y le responda al emisor.
+Mientras toodo esto pasa por un thread, se le muestra al usuario el menu del nodo. De esta manera el nodo
+puede enviar mensajes mientras sigue escuchando.
+Proceso de envio
