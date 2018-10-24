@@ -1,8 +1,9 @@
 from socket import *
 from threading import *
+from fase2.bitnator import *
 import threading
 
-class dispatcher:
+class Dispatcher:
 
     # Diseño del paquete:
     #################################################################################################################
@@ -14,21 +15,37 @@ class dispatcher:
     # 4 Bytes   #   2 Bytes     #  4 Bytes   #    2 Bytes     #  bit  # bit# bit# bit # bit # 3 bits  #  1 byte   ##
     #           #               #            #                #       #    #    #     #     #         #           ##
     ################################################################################################################
-    def __init__(self,IP,Port):
+    def __init__(self):
         # Direccion IP y puerto del nodo que crea el socket
-        self.ipDispatcher = IP
-        self.portDispatcher = Port
+        self.ipDispatcher = ""
+        self.portDispatcher = 0
+
         # Direccion IP y puerto del otro extremo del socket
         self.ipDestination = ""
-        self.portDestination = ""
+        self.portDestination = 0
+
         # Variables necesarias para manejar paquetes e hilos
         self.SN = 0
         self.RN = 0
         self.lock = threading.Lock()
+
         # Creacion del socket UDP para usarlo para mandar mensajes
         self.socketUtil = socket(AF_INET, SOCK_DGRAM)
+
         # Diccionario de conexiones aceptadas en el handshake
         self.acceptedConnections = {}
+
+        # Clase que se encarga de codificar y decodificar información
+        self.bitnator = Bitnator()
+
+        #Buzón donde se guardan los mensajes que se reciben
+        self.mailbox = []
+
+
+
+    def bind(self,ip,port):
+        self.ipDispatcher = ip
+        self.portDispatcher = port
 
     # El dispatcher se quedara escuchando por mensajes nuevos mediante un thread
     def listen(self):
@@ -44,6 +61,7 @@ class dispatcher:
 
             # Recibo el paquete mediante el socket UDP
             packetMessage, clientAddress = self.serverSocket.recvfrom(2048)
+            decryptedMessage = self.bitnator.decryptPacket(packetMessage)
 
             # Debo analizar el paquete y si el SYN Flag esta encendido, debo procesar handshake
             # Puede ser que sea solo el SYN o con el ACK para aceptar la conexion

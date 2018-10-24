@@ -1,17 +1,42 @@
-from socket import *
-from fase2.bitnator import *
 import threading
+from fase2.dispatcher import Dispatcher
+
+IPORIGEN = 0
+PUERTOORIGEN = 1
+IPDESTINO = 2
+PUERTODESTINO = 3
+SYN = 4
+RN = 5
+SN = 6
+ACK = 7
+FIN = 8
+RELLENO = 9
+MENSAJE = 10
 
 class NodeUdp:
 
     # constructor del nodo
-    def __init__(self, serverAddress):
-        self.serverSocket = socket(AF_INET, SOCK_DGRAM)
-        self.connectionList = {}
-        self.encryptor = Bitnator(self)
+    def __init__(self, ip, port):
+        #Guardamos la dirección del nodo
+        self.ip = ip
+        self.port = port
 
+        #Creamos el servidor que se va a encargar de recibir todos los mensajes, que vengan de otro nodo
+        self.serverSocket = Dispatcher()
+
+        #Mapa que va a tener como KEY = (otroIp, otroPuerto), VALUE = (Dispatcher*)
+        self.socketMapping = {}
+
+        #Buzon que contiene la lista de mensajes recibidos por el Dispatcher
+        self.mailbox = []
+
+        #Creamos la bitacora donde se va a guardar cualquier movimiento importante que hace el nodo
+        self.binnacle = []
+
+        #Decimos que el nodo está vivo, y ya podrá contestar como escuchar  mensajes
         self.alive = True
 
+        #Creamos el thread
         self.listener = threading.Thread(name='daemon',target=self.listen)
         self.listener.setDaemon(True)
         self.listener.start()
@@ -19,39 +44,53 @@ class NodeUdp:
 
 
     def listen(self):
-        self.serverSocket.bind(self.serverAddress)
+        #Asociamos el socket a nuestro Ip y Puerto
+        self.serverSocket.bind(self.ip,self.port)
+
+        #Ponemos el socket a escuchar paquetes
+        self.serverSocket.listen()
 
         while self.alive:
-            packetMessage, clientAddress = self.serverSocket.recvfrom(2048)
+            #Se encarga de recibir todos los paquetes que son enviados a esta dirección
+            packetMessage = self.serverSocket.recv()
+            otherAddres = (packetMessage[IPORIGEN],packetMessage[PUERTOORIGEN])
 
-            if len(packetMessage) is 1:
-                # Si es de tamaño 8 quiere decir que el address que envio el mensaje murió
-                self.closingConnection(UDP, clientAddress)
+            if self.socketMapping.get(otherAddres) is not None:
+                #Quiere decir que el paquete llego de una conexión ya existente
+
                 break
             else:
-                # Decodifica la información
-                self.encryptor.bitDecrypt(packetMessage, clientAddress)
-
-                #Retornamos una respuesta
+                #Quiere decir que el paquete llego de un Socket con el que es primera vez que se comunica
+                connectionSocket,otherAddress = self.serverSocket.accept()
+                data = {otherAddres,connectionSocket}
+                self.socketMapping.update(data)
+                # Agregar info a bitácora
 
         self.serverSocket.close()
-        print("I dont feel good Mr Stark...")
 
 
 
-    # Metodo para comenzar la conexion con otro nodo
-    def startConnection(self,otrherAddress):
-        return 0
+    #Método para comenzar la conexion con otro nodo
+    def startConnection(self,otherIp,otherPort):
+        clientSocket = Dispatcher(self.ip,self.port)
+        try:
+            clientSocket.connect(otherIp,otherPort)
+            data = {(otherIp,otherPort),clientSocket}
+            self.socketMapping.update(data)
+            #Agregar info a bitácora
+        except:
+            #Agregar info a bitácora
+            return  0
 
 
 
-    # Metodo que cierra la conexion con el nodo seleccionado
+    #Método que cierra la conexion con el nodo seleccionado
     def closeConnection(self,nodeOption):
         return 0
 
 
 
-    # Metodo que cierra todas las conexiones
+    #Método que cierra todas las conexiones
     def closeAllConnection(self):
         return 0
 

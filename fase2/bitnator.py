@@ -4,6 +4,11 @@ FLAG = 3
 
 class Bitnator:
 
+    #E BItnator debe ser capaz de codificar headers, mensajes, banderas y los demás bits que nos permiten saber que
+    #que tipo de mensaje es
+
+    #También debe poder decodificar todo lo que mencionamos anteriormente
+
     def __init__(self, node):
         self.node = node
 
