@@ -25,11 +25,11 @@ class NodeTcp(Node):
         while self.alive:
             connectionSocket, addr = self.serverSocket.accept()
             print(addr)
-            #self.currentConnection[addr] = connectionSocket
+            self.currentConnection[addr] = connectionSocket
 
-            #t = threading.Thread(name='daemon',target=self.listenMessage, args=(connectionSocket, addr))
-            #t.setDaemon(True)
-            #t.start()
+            t = threading.Thread(name='daemon',target=self.listenMessage, args=(connectionSocket, addr))
+            t.setDaemon(True)
+            t.start()
             pass
 
         self.serverSocket.close()
