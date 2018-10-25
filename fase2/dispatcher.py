@@ -114,6 +114,7 @@ class Dispatcher:
                 rn=0,
                 sn=0,
                 ack=1,
+                fin=0,
                 message=""
             )
 
