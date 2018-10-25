@@ -97,13 +97,19 @@ class Dispatcher:
 
 
     def decryptPacket(self,packetMessage):
-        #Llama al método que desencripta un mensaje
+
+        # Llama al método que desencripta un mensaje
         decryptedMessage = self.bitnator.decrypt(packetMessage)
 
-        if (decryptedMessage[SYN] == 1 and decryptedMessage[ACK] == 1):
-            self.processHandshake(decryptedMessage)
+        # Si la dirección que viene en el mensaje es correcta, además de que el ACK y SYN están en 0, quiere decir que la conexión sí puede iniciar
+        if decryptedMessage[IPDESTINO] == self.ipDispatcher and decryptedMessage[PUERTODESTINO] == self.portDispatcher:
+            if decryptedMessage[SYN] == 1 and decryptedMessage[ACK] == 1:
+                self.processHandshake(decryptedMessage)
+            else:
+                self.debugPacket(decryptedMessage)
         else:
-            self.debugPacket(decryptedMessage)
+            # El paquete es ignorado
+            pass
 
 
 
@@ -111,12 +117,13 @@ class Dispatcher:
 
     # El cliente crea la conexion con la info del destino
     def connect(self, ipAddress, port):
+
+
         pass
 
     # Acepta la conexion, en otras palabras el handshaking
     def accept(self,decryptedMessage):
-        #Si la dirección que viene en el mensaje es correcta, además de que el ACK y SYN están en 0, quiere decir que la conexión sí puede iniciar
-        if decryptedMessage[SYN] == 0 and decryptedMessage[ACK] == 0 and decryptedMessage[IPDESTINO] == self.ipDispatcher and decryptedMessage[PUERTODESTINO] == self.portDispatcher:
+
             # Encriptamos el mensaje donde se devuelve un ACK al cliente
             acceptingMessage = self.bitnator.encrypt(
                 origenIp=self.ipDispatcher,
