@@ -64,10 +64,20 @@ class Bitnator:
         flags = flags / 2
         fin = flags % 2
 
-        # Obtenmos las direcciones correspondientes que se recibieron en el paquete
-        destinationPort = packet.pop() * 256 + packet.pop()
-        destinationIp = str(packet.pop()) + '.' + str(packet.pop()) + '.' + str(packet.pop()) + '.' + str(packet.pop())
-        origenPort = packet.pop() * 256 + packet.pop()
-        origenIp = str(packet.pop()) + '.' + str(packet.pop()) + '.' + str(packet.pop()) + '.' + str(packet.pop())
+        # Obtenemos la dirección de la dirección destino
+        destinationPort = packet.pop() + packet.pop() * 256
+        # Como a la hora de realizar por se optinene primero el número de más a la derecha, se creo un método que acomodaba el Ip de la forma correcta
+        destinationIp = self.acomodateIp(str(packet.pop()), str(packet.pop()), str(packet.pop()), str(packet.pop()))
+
+        # Obtenemos la dirección de la dirección origen
+        origenPort = packet.pop() + packet.pop() * 256
+        # Como a la hora de realizar por se optinene primero el número de más a la derecha, se creo un método que acomodaba el Ip de la forma correcta
+        origenIp = self.acomodateIp(str(packet.pop()), str(packet.pop()), str(packet.pop()), str(packet.pop()))
 
         return (origenIp,origenPort,destinationIp,destinationPort,syn,rn,sn,fin,message)
+
+
+
+    def acomodateIp(self,num4,num3,num2,num1):
+        decriptedIp = num1 + '.' + num2 + '.' + num3 + '.' + num4
+        return decriptedIp
