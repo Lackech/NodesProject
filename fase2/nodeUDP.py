@@ -49,10 +49,14 @@ class NodeUdp:
                 pass
             else:
                 # Quiere decir que el paquete llego de un Socket con el que es primera vez que se comunica
-                connectionSocket,otherAddress = self.serverSocket.accept(decryptedMessage)
-                data = {otherAddres,connectionSocket}
-                self.socketMapping.update(data)
-                # Agregar info a bitácora
+                try:
+                    connectionSocket,otherAddress = self.serverSocket.accept(decryptedMessage)
+                    data = {otherAddres,connectionSocket}
+                    self.socketMapping.update(data)
+                    # Agregar info a bitácora
+                except:
+                    # Agregar info a bitácora
+                    pass
 
         self.serverSocket.close()
 

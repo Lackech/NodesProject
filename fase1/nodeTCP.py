@@ -24,11 +24,13 @@ class NodeTcp(Node):
 
         while self.alive:
             connectionSocket, addr = self.serverSocket.accept()
-            self.currentConnection[addr] = connectionSocket
+            print(addr)
+            #self.currentConnection[addr] = connectionSocket
 
-            t = threading.Thread(name='daemon',target=self.listenMessage, args=(connectionSocket, addr))
-            t.setDaemon(True)
-            t.start()
+            #t = threading.Thread(name='daemon',target=self.listenMessage, args=(connectionSocket, addr))
+            #t.setDaemon(True)
+            #t.start()
+            pass
 
         self.serverSocket.close()
 
@@ -79,6 +81,7 @@ class NodeTcp(Node):
                 clientSocket.send(self.encryptor.bitEncript(messageList))
 
             except:
+                print("holas")
                 clientSocket.close()
                 successful = False
 

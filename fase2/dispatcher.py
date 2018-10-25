@@ -53,6 +53,9 @@ class Dispatcher:
         #Buzón donde se guardan los mensajes que se reciben
         self.mailbox = []
 
+        # Diccionario que contiene los sockets de las posibles conexiones
+        self.posibleConnections = {}
+
 
 
     def bind(self,ip,port):
@@ -99,18 +102,48 @@ class Dispatcher:
 
     # Acepta la conexion, en otras palabras el handshaking
     def accept(self,decryptedMessage):
-        #Si el SYN y ACK tienen el valor 0, quiere decir que se quiere comenzar a realizar una comunicación
-        if decryptedMessage[SYN] == 0 and decryptedMessage[ACK] == 0:
-            #Encriptamos el mensaje que accepta una conexión
-            acceptingMessage = self.bitnator.encryptAcceptMessage()
+        #Si la dirección que viene en el mensaje es correcta, además de que el ACK y SYN están en 0, quiere decir que la conexión sí puede iniciar
+        if decryptedMessage[SYN] == 0 and decryptedMessage[ACK] == 0 and decryptedMessage[IPDESTINO] == self.ipDispatcher and decryptedMessage[PUERTODESTINO] == self.portDispatcher:
+            # Encriptamos el mensaje donde se devuelve un ACK al cliente
+            acceptingMessage = self.bitnator.encrypt(
+                origenIp=self.ipDispatcher,
+                origenPort=self.portDispatcher,
+                destinationIp=decryptedMessage[IPORIGEN],
+                destinationPort=decryptedMessage[PUERTOORIGEN],
+                syn=0,
+                rn=0,
+                sn=0,
+                ack=1,
+                message=""
+            )
 
             # Creacion del socket UDP por e que se va a enviar el mensaje de aceptación
             acceptingSocket = socket(AF_INET, SOCK_DGRAM)
-            #Enviamos el mensaje de aceptación
-            acceptingSocket.sendto(acceptingMessage,(decryptedMessage[IPORIGEN],decryptedMessage[PUERTOORIGEN]))
+            # Enviamos el mensaje de aceptación
+            acceptingSocket.sendto(acceptingMessage, (decryptedMessage[IPORIGEN], decryptedMessage[PUERTOORIGEN]))
+            acceptingSocket.close()
 
-        # Quiere decir que el mensaje recibido no fue el correcto, por lo que le responde con un NACK
+            # Creamos un socket que se toma como un posible socket de conexión, en caso de que el handshake se efectue correctamente
+            posibleSocket = Dispatcher()
+            data = {(decryptedMessage[IPORIGEN], decryptedMessage[PUERTOORIGEN]),posibleSocket}
+            self.posibleConnections.update(data)
+
+            # Esperamos una respuesta del cliente
+            while len(posibleSocket.mailbox) == 0:
+                pass
+            finalAnswer = posibleSocket.mailbox.pop()
+
+
+            # Si el cliente responde correctamente devolvemos el socet ya con toda la información para trabajar, si sale mal descartamos la conexión
+            if finalAnswer[SYN] == 1 and finalAnswer[ACK] == 1 and finalAnswer[IPDESTINO] == self.ipDispatcher and finalAnswer[PUERTODESTINO] == self.portDispatcher:
+                return posibleSocket,(finalAnswer[IPORIGEN], finalAnswer[PUERTOORIGEN])
+
+            else:
+                self.posibleConnections.pop((decryptedMessage[IPORIGEN], decryptedMessage[PUERTOORIGEN]))
+
+        # Quiere decir que el mensaje recibido no fue el correcto, por lo que no hace nada
         else:
+            pass
 
 
 
