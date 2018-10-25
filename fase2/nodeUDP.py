@@ -1,17 +1,5 @@
 import threading
-from fase2.dispatcher import Dispatcher
-
-IPORIGEN = 0
-PUERTOORIGEN = 1
-IPDESTINO = 2
-PUERTODESTINO = 3
-SYN = 4
-RN = 5
-SN = 6
-ACK = 7
-FIN = 8
-RELLENO = 9
-MENSAJE = 10
+from fase2.dispatcher import *
 
 class NodeUdp:
 
@@ -44,24 +32,24 @@ class NodeUdp:
 
 
     def listen(self):
-        #Asociamos el socket a nuestro Ip y Puerto
+        # Asociamos el socket a nuestro Ip y Puerto
         self.serverSocket.bind(self.ip,self.port)
 
-        #Ponemos el socket a escuchar paquetes
+        # Ponemos el socket a escuchar paquetes
         self.serverSocket.listen()
 
         while self.alive:
-            #Se encarga de recibir todos los paquetes que son enviados a esta dirección
-            packetMessage = self.serverSocket.recv()
-            otherAddres = (packetMessage[IPORIGEN],packetMessage[PUERTOORIGEN])
+            # Se encarga de recibir todos los paquetes que son enviados a esta dirección
+            decryptedMessage = self.serverSocket.recv()
+            otherAddres = (decryptedMessage[IPORIGEN],decryptedMessage[PUERTOORIGEN])
 
             if self.socketMapping.get(otherAddres) is not None:
-                #Quiere decir que el paquete llego de una conexión ya existente
+                # Quiere decir que el paquete llego de una conexión ya existente
 
-                break
+                pass
             else:
-                #Quiere decir que el paquete llego de un Socket con el que es primera vez que se comunica
-                connectionSocket,otherAddress = self.serverSocket.accept()
+                # Quiere decir que el paquete llego de un Socket con el que es primera vez que se comunica
+                connectionSocket,otherAddress = self.serverSocket.accept(decryptedMessage)
                 data = {otherAddres,connectionSocket}
                 self.socketMapping.update(data)
                 # Agregar info a bitácora
