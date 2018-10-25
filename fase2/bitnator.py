@@ -28,6 +28,9 @@ class Bitnator:
         # Encriptamos el dato que va a evniar el mensaje
         represetntativeValue += int(ord(message)).to_bytes(1,'big')
 
+        # Agregamos el mensaje al encriptedMessage
+        encriptedMessage += represetntativeValue
+
         # Retornamos el mensaje encriptado
         return encriptedMessage
 
@@ -54,15 +57,16 @@ class Bitnator:
         flags = flags / 2
         flags = flags / 2
         # Ahora con el módulo empezamos a preguntar si el valor de cada bandera es 1 o 0
-        syn = flags % 2
-        flags = flags / 2
-        rn = flags % 2
-        flags = flags / 2
-        sn = flags % 2
+        fin = flags % 2
         flags = flags / 2
         ack = flags % 2
         flags = flags / 2
-        fin = flags % 2
+        sn = flags % 2
+        flags = flags / 2
+        rn = flags % 2
+        flags = flags / 2
+        syn = flags % 2
+
 
         # Obtenemos la dirección de la dirección destino
         destinationPort = packet.pop() + packet.pop() * 256
