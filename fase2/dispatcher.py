@@ -3,6 +3,12 @@ from threading import *
 from fase2.bitnator import *
 import threading
 
+# Variables para identificar estado actual del socket
+LISTENING = 0
+CONNECTING = 1
+ESTABLISHED = 2
+
+# Variables para identificar las partes de un paquete
 IPORIGEN = 0
 PUERTOORIGEN = 1
 IPDESTINO = 2
@@ -14,6 +20,8 @@ ACK = 7
 FIN = 8
 RELLENO = 9
 MENSAJE = 10
+
+MAXPACKETSIZE = 2048
 
 class Dispatcher:
 
@@ -75,7 +83,7 @@ class Dispatcher:
             # por una respuesta por lo que se debe manejar eso por aqui
 
             # Recibo el paquete mediante el socket UDP
-            packetMessage, clientAddress = self.serverSocket.recvfrom(2048)
+            packetMessage, clientAddress = self.serverSocket.recvfrom(MAXPACKETSIZE)
 
             # Crea un hilo que se encarga de desencriptar el mensaje
             messageDecryptorThread = Thread(target=self.decryptPacket, args=(packetMessage))
@@ -91,8 +99,14 @@ class Dispatcher:
     def decryptPacket(self,packetMessage):
         #Llama al método que desencripta un mensaje
         decryptedMessage = self.bitnator.decryptPacket(packetMessage)
-        #Guarda ese mensaje en la lista que tiene todos los mensajes que le llegan
-        self.mailbox.append(decryptedMessage)
+
+        #Preguntamos sí el mensaje es la respuesta del cliente al ACK del servidor
+        if self.posibleConnections.get((decryptedMessage[IPORIGEN], decryptedMessage[PUERTOORIGEN])) is not None:
+            posibleSocket = self.posibleConnections.get((decryptedMessage[IPORIGEN], decryptedMessage[PUERTOORIGEN]))
+            posibleSocket.mailbox.append(decryptedMessage)
+        else:
+            #Guarda ese mensaje en la lista que tiene todos los mensajes que le llegan, pues el nodo se encarga de a que socket dárselo
+            self.mailbox.append(decryptedMessage)
 
 
 
@@ -137,9 +151,14 @@ class Dispatcher:
 
             # Si el cliente responde correctamente devolvemos el socet ya con toda la información para trabajar, si sale mal descartamos la conexión
             if finalAnswer[SYN] == 1 and finalAnswer[ACK] == 1 and finalAnswer[IPDESTINO] == self.ipDispatcher and finalAnswer[PUERTODESTINO] == self.portDispatcher:
+                # Sacamos del diccionario de posibles conexiones el socket, pues ya es una conexión establecida
+                self.posibleConnections.pop((decryptedMessage[IPORIGEN], decryptedMessage[PUERTOORIGEN]))
+
+                # Retornamos los datos necesarios para que el nodo pueda trabajar
                 return posibleSocket,(finalAnswer[IPORIGEN], finalAnswer[PUERTOORIGEN])
 
             else:
+                # Sacamos del diccionario de posibles conexiones el socket, pues la conexión no se pudo establecer correctamente
                 self.posibleConnections.pop((decryptedMessage[IPORIGEN], decryptedMessage[PUERTOORIGEN]))
 
         # Quiere decir que el mensaje recibido no fue el correcto, por lo que no hace nada
@@ -151,7 +170,7 @@ class Dispatcher:
     # Se recibe el mensaje completo en el nodo, por lo que se revisa por paquete
     def recv(self):
         #Se queda esperando hasta que en la lista haya un mensaje que devolver
-        while len(self.mailbox) is 0:
+        while len(self.mailbox) == 0:
             pass
 
         return self.mailbox.pop()
