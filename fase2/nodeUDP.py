@@ -39,26 +39,31 @@ class NodeUdp:
         self.serverSocket.listen()
 
         while self.alive:
-            # Se encarga de recibir todos los paquetes que son enviados a esta dirección
-            decryptedMessage = self.serverSocket.recv()
-            otherAddres = (decryptedMessage[IPORIGEN],decryptedMessage[PUERTOORIGEN])
-
-            if self.socketMapping.get(otherAddres) is not None:
-                # Quiere decir que el paquete llego de una conexión ya existente
-
+            try:
+                # Tratamos de conectarnos con los sockets que quieren iniciar una conexion
+                connectionSocket,otherAddress = self.serverSocket.accept()
+                data = {otherAddress,connectionSocket}
+                self.socketMapping.update(data)
+                # Agregar info a bitácora
+            except:
+                # Agregar info a bitácora
                 pass
-            else:
-                # Quiere decir que el paquete llego de un Socket con el que es primera vez que se comunica
-                try:
-                    connectionSocket,otherAddress = self.serverSocket.accept(decryptedMessage)
-                    data = {otherAddres,connectionSocket}
-                    self.socketMapping.update(data)
-                    # Agregar info a bitácora
-                except:
-                    # Agregar info a bitácora
-                    pass
 
         self.serverSocket.close()
+
+
+
+    # Escucha cada conexion para procesar el mensaje
+    def listenMessage(self, connectionSocket, clientAddress):
+        while self.alive:
+            try:
+                # Optiene la información, sí es que la hay
+                packetMessage = connectionSocket.recv(1024)
+
+                # Agregar info a bitacora
+            except:
+                self.closingConnection(connectionSocket, clientAddress)
+                break
 
 
 
