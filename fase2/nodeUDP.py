@@ -12,11 +12,8 @@ class NodeUdp:
         #Creamos el servidor que se va a encargar de recibir todos los mensajes, que vengan de otro nodo
         self.serverSocket = Dispatcher()
 
-        #Mapa que va a tener como KEY = (otroIp, otroPuerto), VALUE = (Dispatcher*)
+        # Mapa que contiene toda la informaión de los sockets con los que actualmente está conectado
         self.socketMapping = {}
-
-        #Buzon que contiene la lista de mensajes recibidos por el Dispatcher
-        self.mailbox = []
 
         #Creamos la bitacora donde se va a guardar cualquier movimiento importante que hace el nodo
         self.binnacle = []
@@ -40,13 +37,16 @@ class NodeUdp:
 
         while self.alive:
             try:
-                # Tratamos de conectarnos con los sockets que quieren iniciar una conexion
                 connectionSocket,otherAddress = self.serverSocket.accept()
-                data = {otherAddress,connectionSocket}
-                self.socketMapping.update(data)
+
+                # Creamos el thread
+                socketThread = threading.Thread(name='daemon', target=self.listenMessage, args=(connectionSocket, otherAddress))
+                socketThread.setDaemon(True)
+                socketThread.start()
                 # Agregar info a bitácora
             except:
                 # Agregar info a bitácora
+                # No se logró finalizar la conexión
                 pass
 
         self.serverSocket.close()
@@ -57,8 +57,8 @@ class NodeUdp:
     def listenMessage(self, connectionSocket, clientAddress):
         while self.alive:
             try:
-                # Optiene la información, sí es que la hay
-                packetMessage = connectionSocket.recv(1024)
+                # Aquí esperamos que al socket le lleguen todos los paquetes del mensaje y lo recibimos
+                packetMessage = connectionSocket.recv(MAXPACKETSIZE)
 
                 # Agregar info a bitacora
             except:
@@ -67,22 +67,26 @@ class NodeUdp:
 
 
 
-    #Método para comenzar la conexion con otro nodo
+    # Método con el que se empieza la conexión con otro nodo
     def startConnection(self,otherIp,otherPort):
-        clientSocket = Dispatcher(self.ip,self.port)
+        success = True
+
+        clientSocket = Dispatcher()
+        otherAddress = (otherIp,otherPort)
         try:
             clientSocket.connect(otherIp,otherPort)
-            data = {(otherIp,otherPort),clientSocket}
-            self.socketMapping.update(data)
+            self.socketMapping[otherAddress] = clientSocket
             #Agregar info a bitácora
         except:
+            success = False
             #Agregar info a bitácora
-            return  0
+
+        return success
 
 
 
     #Método que cierra la conexion con el nodo seleccionado
-    def closeConnection(self,nodeOption):
+    def closeConnection(self):
         return 0
 
 
@@ -93,15 +97,14 @@ class NodeUdp:
 
 
     # Metodo que envia mensajes a otra conexion
-    def send(self,nodeOption,message):
-        #Crea la conexión con el servidor
-        clientSocket = socket(AF_INET, SOCK_DGRAM)
+    def send(self,otherAddress,message):
+        # Obtiene la conexión ya existente con el otro nodo
+        clientSocket = self.socketMapping[otherAddress]
 
-        #Envía un mensaje codificado
-        clientSocket.sendto(self.encryptor.bitEncript(messageList),otherAddress)
+        # Envía el mensaje por medio del socket
+        clientSocket.send(message)
 
-        #Cerramos la conexión
-        clientSocket.close()
+
 
     # Método que retorn un string con la lista de conexiones vivas
     def getConnectionList(self):
