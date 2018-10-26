@@ -75,7 +75,9 @@ class Dispatcher:
         self.posibleConnections = queue.Queue(MAXQUEUEZISE)
 
         # Mapeo de conexiones
-        self.conexiones ={}
+        self.connections ={}
+
+        self.data = bytearray()
 
 
 
@@ -116,10 +118,11 @@ class Dispatcher:
 
         # Si la dirección que viene en el mensaje es correcta, además de que el ACK y SYN están en 0, quiere decir que la conexión sí puede iniciar
         if decryptedMessage[IPDESTINO] == self.ipDispatcher and decryptedMessage[PUERTODESTINO] == self.portDispatcher:
-            if decryptedMessage[SYN] == 1 and decryptedMessage[ACK] == 0:
+            if decryptedMessage[SYN] == 1 and decryptedMessage[ACK] == 0 and decryptedMessage[FIN] == 0:
                 self.processHandshake(decryptedMessage, self.ipDispatcher,self.portDispatcher,self.socketUtil)
             else:
-                self.debugPacket(decryptedMessage)
+                existingConn = self.connections[(decryptedMessage[IPORIGEN],decryptedMessage[PUERTOORIGEN])]
+                existingConn.debugPacket(decryptedMessage)
         else:
             # El paquete es ignorado
             pass
@@ -225,9 +228,42 @@ class Dispatcher:
 
     # Analiza el paquete, revisando el RN y SN y tomando la accion adecuada.
     def debugPacket(self,packetMessage):
-        if packetMessage[SYN] == 1:
-            pass
+        if packetMessage[SYN] == 1 and packetMessage[FIN] == 0:
+            msgResponse = self.bitnator.encrypt(self.ipDispatcher, self.portDispatcher, self.ipDestination,
+                                                self.portDestination, 1, self.RN, self.SN,
+                                                1, 1, 0)
+            # Envia el mensaje para terminar e=con el handshake del lado del cliente
+            self.socketUtil.sendto(msgResponse, (self.ipDestination, self.portDestination))
+
+        elif packetMessage[SYN] == 1 and packetMessage[FIN] == 1:
+            # Esto en el lado del server libera la cola y continua el accept
+            self.connMailbox.put_nowait(packetMessage)
+
+        # Es mensaje de datos
+        elif packetMessage[SN] == self.SN:
+            self.RN = (self.RN + 1) % 2
+            # Envio el ACK y reviso si es mensaje final o no
+            if packetMessage[FIN] == 1:
+                #Envir mensaje de fin y parar el analizar mensaje
+                msgResponse = self.bitnator.encrypt(self.ipDispatcher, self.portDispatcher, self.ipDestination,
+                                                    self.portDestination, 0, self.RN, self.SN,
+                                                    1, 1, 0)
+                self.socketUtil.sendto(msgResponse, (self.ipDestination, self.portDestination))
+            else:
+                self.mailbox.put_nowait(packetMessage)
+                self.data += packetMessage[MENSAJE]
+                msgResponse = self.bitnator.encrypt(self.ipDispatcher, self.portDispatcher, self.ipDestination,
+                                                    self.portDestination, 0, self.RN, self.SN,
+                                                    1, 0, 0)
+                self.socketUtil.sendto(msgResponse, (self.ipDestination, self.portDestination))
         else:
+            # Recibo el ACK y actualizo el SN
+            self.SN = packetMessage[RN]
+
+
+
+
+
 
 
     # Una vez que se detecto el SYN Flag encendio en el paquete se pasa a este metodo para procesarlo
@@ -246,7 +282,7 @@ class Dispatcher:
         # Comienzo handshake en el nodo server
 
         # Añado esta conexión al mapa de conexiones del nodo
-        self.conexiones[(socketConexion.IPDestino, socketConexion.puertoDestino)] = socketConexion
+        self.connections[(socketConexion.IPDestino, socketConexion.puertoDestino)] = socketConexion
 
         #Agregamos a la cola para iniciar el accept
         self.posibleConnections.put_nowait(socketConexion)
