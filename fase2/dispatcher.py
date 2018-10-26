@@ -28,7 +28,7 @@ RELLENO = 9
 MENSAJE = 10
 
 MAXPACKETSIZE = 2048
-MAXQUEUEZISE = 0
+MAXQUEUEZISE = 5
 
 class Dispatcher:
 
@@ -42,6 +42,16 @@ class Dispatcher:
     # 4 Bytes   #   2 Bytes     #  4 Bytes   #    2 Bytes     #  bit  # bit# bit# bit # bit # 3 bits  #  1 byte   ##
     #           #               #            #                #       #    #    #     #     #         #           ##
     ################################################################################################################
+
+    # Banderas activadas para cada caso
+    # Mensaje de inicio de conexion que envia el connect (cliente): ||SYN = 1, ACK = 0, FIN = 0||
+    # Mensaje de respuesta al inicio de conexion que envia el accept (servidor): ||SYN = 1, ACK = 1, FIN = 0||
+    # Mensaje de respuesta que hace el cliente a la respuesta de conexion que envía el servidor : ||SYN = 1, ACK = 1, FIN = 1||
+    # Mensaje que contiene datos: ||SYN = 0, ACK = 0, FIN|| = 0 ó ||SYN = 0, ACK = 0, FIN = 1|| (en caso de que sea el final del mensaje)
+    # Mensaje que contiene el ack a los datos que recibió: ||SYN = 0, ACK = 1, FIN = 0||
+    # Mensaje para finalizar la conexión: ||SYN = 1, ACK = 0, FIN = 1||
+
+
     def __init__(self):
         # Direccion IP y puerto del nodo que crea el socket
 
@@ -62,20 +72,21 @@ class Dispatcher:
         # Diccionario que contiene los sockets de las posibles conexiones
         self.posibleConnections = {}
 
+        # Diccionario de conexiones aceptadas en el handshake
+        self.acceptedConnections = {}
+
         # Creación del socet UDP que va a funcionar como servidor
         self.serverSocket = socket(AF_INET, SOCK_DGRAM)
 
         # Creacion del socket UDP para usarlo para mandar mensajes
         self.socketUtil = socket(AF_INET, SOCK_DGRAM)
 
-        # Diccionario de conexiones aceptadas en el handshake
-        self.acceptedConnections = {}
-
         # Clase que se encarga de codificar y decodificar información
         self.bitnator = Bitnator()
 
         #Buzón donde se guardan los mensajes que se reciben
-        self.mailbox = queue.Queue(MAXQUEUEZISE);
+        self.messageMailbox = queue.Queue(MAXQUEUEZISE);
+        self.ackMailbox = queue.Queue(MAXQUEUEZISE);
 
         #Buzon para los mensajes del handshake
         self.connMailbox = queue.Queue(MAXQUEUEZISE)
@@ -128,10 +139,24 @@ class Dispatcher:
         # Si la dirección que viene en el mensaje es correcta, además de que el ACK y SYN están en 0, quiere decir que la conexión sí puede iniciar
         if decryptedMessage[IPDESTINO] == self.ipDispatcher and decryptedMessage[PUERTODESTINO] == self.portDispatcher:
             if decryptedMessage[SYN] == 1 and decryptedMessage[ACK] == 0 and decryptedMessage[FIN] == 0:
+                # Entramos en el caso donde el paquete recibido es de tipo inicio de conexión
                 self.processHandshake(decryptedMessage, self.ipDispatcher,self.portDispatcher,self.socketUtil)
+
+            elif packetMessage[SYN] == 1 and packetMessage[ACK] == 0 and packetMessage[FIN] == 1:
+            # Entramos en el caso donde el paquete recibido es de tipo cierre de conexión
+                # Lo agregamos a la cola que guarda paquete de conexión
+                self.connMailbox.put_nowait(packetMessage)
+
             else:
-                existingConn = self.connections[(decryptedMessage[IPORIGEN],decryptedMessage[PUERTOORIGEN])]
-                existingConn.debugPacket(decryptedMessage)
+                otherAddress = (decryptedMessage[IPORIGEN],decryptedMessage[PUERTOORIGEN])
+                # Verificamos que si haya un socket que está en proceso de finalizar la conexión
+                if self.posibleConnections.get(otherAddress) is not None:
+                    # Obtenemos la socket específico y le agregamos a la cola de mensajes de conexión el mensaje, para que lo procese
+                    posibleConnection = self.posibleConnections[otherAddress]
+                    posibleConnection.debugPacket(decryptedMessage)
+                else:
+                    existingConn = self.acceptedConnections[otherAddress]
+                    existingConn.debugPacket(decryptedMessage)
         else:
             # El paquete es ignorado
             pass
@@ -185,7 +210,7 @@ class Dispatcher:
             origenPort=self.portDispatcher,
             destinationIp=key[0],
             destinationPort=key[1],
-            syn=0,
+            syn=1,
             rn=0,
             sn=0,
             ack=1,
@@ -202,7 +227,7 @@ class Dispatcher:
 
         try:
             # Esperamos que nos llegue un mensaje
-            posibleSocket.mailbox.get()
+            posibleSocket.connMailbox.get()
 
             # Agregar informacion a la bitácora
 
@@ -216,63 +241,140 @@ class Dispatcher:
 
     # Se recibe el mensaje completo en el nodo, por lo que se revisa por paquete
     def recv(self):
-        while True:
-            # Esperamos a que nos llegue un mensaje
-            packetMessage = self.mailbox.get()
-            # 
+        message = ""
+        completed = False
 
+        while completed:
+            # Esperamos a que nos llegue un paquete
+            packetMessage = self.messageMailbox.get()
+            message += packetMessage[MENSAJE]
 
-        return self.mailbox.pop()
+            if packetMessage[FIN] == 1:
+                completed = True
+
+            # Cuando nos llega un mensaje revisamos si el rn y el sn están correctos
+            if self.RN == packetMessage[SN]:
+                self.RN = (self.RN + 1) % 2
+
+            ackMessage = self.bitnator.encrypt(
+                origenIp=self.ipDispatcher,
+                origenPort=self.portDispatcher,
+                destinationIp=packetMessage[IPORIGEN],
+                destinationPort=packetMessage[PUERTOORIGEN],
+                syn=0,
+                rn=self.RN,
+                sn=0,
+                ack=1,
+                fin=0,
+                message=""
+            )
+
+            # Creacion del socket UDP por e que se va a enviar el mensaje de aceptación
+            ackSocket = socket(AF_INET, SOCK_DGRAM)
+            # Enviamos el mensaje de aceptación
+            ackSocket.sendto(ackMessage, (packetMessage[IPORIGEN],packetMessage[PUERTOORIGEN]))
+            # Cerramos la conexión del socket UDP
+            ackSocket.close()
+
+        return message
 
 
 
     # Se envia el mensaje, se envia por paquetes por lo que se analiza su encabezado para ver su comportamiento
     def send(self,message):
+        fin = 0
+        success = False
+        for i in range(0,len(message)):
+            if i == len(message) - 1:
+                fin = 1
 
-        pass
+            dataMessage = self.bitnator.encrypt(
+                origenIp=self.ipDispatcher,
+                origenPort=self.portDispatcher,
+                destinationIp=self.ipDestination,
+                destinationPort=self.portDestination,
+                syn=0,
+                rn=0,
+                sn=self.SN,
+                ack=0,
+                fin=fin,
+                message=message[i]
+            )
+
+
+            while success == False:
+                # Creacion del socket UDP por e que se va a enviar el mensaje de aceptación
+                ackSocket = socket(AF_INET, SOCK_DGRAM)
+                # Enviamos el mensaje de aceptación
+                ackSocket.sendto(dataMessage, (self.ipDestination, self.portDestination))
+                # Cerramos la conexión del socket UDP
+                ackSocket.close()
+
+                try:
+                    ackMessage = self.ackMailbox.get()
+                    if ackMessage[RN] != self.SN:
+                        self.SN = ackMessage[RN]
+
+                    success = True
+                except:
+                    # No hacemos nada pues el mensaje se vuelve a enviar con el while
+                    pass
+
+
 
     # Cierra la conexion despues del envio, por lo que se cierra en dos pasos(msj - ack)
     def close(self):
-        pass
+        # Creamos el paquete de close
+        closeMessage = self.bitnator.encrypt(
+            origenIp=self.ipDispatcher,
+            origenPort=self.portDispatcher,
+            destinationIp=self.ipDestination,
+            destinationPort=self.portDestination,
+            syn=1,
+            rn=0,
+            sn=self.SN,
+            ack=0,
+            fin=1,
+            message=""
+        )
 
+        # Creacion del socket UDP por e que se va a enviar el mensaje de cierre
+        ackSocket = socket(AF_INET, SOCK_DGRAM)
+        # Enviamos el mensaje de aceptación
+        ackSocket.sendto(closeMessage, (self.ipDestination, self.portDestination))
+        # Cerramos la conexión del socket UDP
+        ackSocket.close()
+
+        try:
+            # Si le llega un mesaje quiere decir que al otro le llego, pero independientemente de si le llega o no el nodo se muere
+            # en cualquier otro caso al otro le toca solucionar el problema
+            answerMessage = self.connMailbox.get()
+        except:
+            pass
 
 
     # Analiza el paquete, revisando el RN y SN y tomando la accion adecuada.
     def debugPacket(self,packetMessage):
-        if packetMessage[SYN] == 1 and packetMessage[FIN] == 0:
-            msgResponse = self.bitnator.encrypt(self.ipDispatcher, self.portDispatcher, self.ipDestination,
-                                                self.portDestination, 1, self.RN, self.SN,
-                                                1, 1, 0)
-            # Envia el mensaje para terminar e=con el handshake del lado del cliente
-            self.socketUtil.sendto(msgResponse, (self.ipDestination, self.portDestination))
-
-        elif packetMessage[SYN] == 1 and packetMessage[FIN] == 1:
-            # Esto en el lado del server libera la cola y continua el accept
+        if packetMessage[SYN] == 1 and packetMessage[ACK] == 1 and packetMessage[FIN] == 0:
+        # Entramos en el caso donde el paquete recibido es un ACK al paquete que inicia el handshake
+            # Lo agregamos a la cola que guarda mensajes de conexión
             self.connMailbox.put_nowait(packetMessage)
 
-        # Es mensaje de datos
-        elif packetMessage[SN] == self.RN:
-            self.RN = (self.RN + 1) % 2
-            # Envio el ACK y reviso si es mensaje final o no
-            if packetMessage[FIN] == 1:
-                #Envir mensaje de fin y parar el analizar mensaje
-                msgResponse = self.bitnator.encrypt(self.ipDispatcher, self.portDispatcher, self.ipDestination,
-                                                    self.portDestination, 0, self.RN, self.SN,
-                                                    1, 1, 0)
-                self.socketUtil.sendto(msgResponse, (self.ipDestination, self.portDestination))
-            else:
-                self.mailbox.put_nowait(packetMessage)
-                self.data += packetMessage[MENSAJE]
-                msgResponse = self.bitnator.encrypt(self.ipDispatcher, self.portDispatcher, self.ipDestination,
-                                                    self.portDestination, 0, self.RN, self.SN,
-                                                    1, 0, 0)
-                self.socketUtil.sendto(msgResponse, (self.ipDestination, self.portDestination))
-        else:
-            # Recibo el ACK y actualizo el SN
-            self.SN = packetMessage[RN]
+        elif packetMessage[SYN] == 1 and packetMessage[ACK] == 1 and packetMessage[FIN] == 1:
+        # Entramos en el caso donde el paquete recibido es un ACK al ACK enviado después de recibir un paquete que inicia el handshake
+            # Lo agregamos a la cola que guarda paquete de conexión
+            self.connMailbox.put_nowait(packetMessage)
 
+        elif packetMessage[SYN] == 0 and packetMessage[ACK] == 0:
+        # Entramos en el caso donde el paquete recibido lo que contiene son datos, no se pregunta por la bandera FIN, pues el
+        # paquete puede no ser el útlimo de este tipo o sí, por lo que no importa el estado de la bandera FIN
+            # Lo agregamos a la cola que guarda paquete con datos
+            self.messageMailbox.put_nowait(packetMessage)
 
-
+        elif packetMessage[SYN] == 0 and packetMessage[ACK] == 1 and packetMessage[FIN] == 0:
+        # Entramos en el caso donde el paquete recibido lo que contiene es un ack al paquete que se envió con datos
+            # Lo agregamos a la cola que guarda paquete de tipo ack
+            self.ackMailbox.put_nowait(packetMessage)
 
 
 
@@ -292,5 +394,9 @@ class Dispatcher:
 
         #Agregamos a la cola para iniciar el accept, esto hace que el método accept se empiece a ejecutar
         self.keys.append((socketConexion.IPDestino, socketConexion.puertoDestino))
+
+
+
+    # Cerramos la conexión específica
 
 

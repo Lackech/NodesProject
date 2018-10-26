@@ -62,7 +62,6 @@ class NodeUdp:
 
                 # Agregar info a bitacora
             except:
-                self.closingConnection(connectionSocket, clientAddress)
                 break
 
 
