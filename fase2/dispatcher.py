@@ -59,6 +59,11 @@ class Dispatcher:
 
         # Lista d que contiene los Keys con los que se puede identificar el posible socket con el que se esta realizando la conexión
         self.keys = []
+        # Diccionario que contiene los sockets de las posibles conexiones
+        self.posibleConnections = {}
+
+        # Creación del socet UDP que va a funcionar como servidor
+        self.serverSocket = socket(AF_INET, SOCK_DGRAM)
 
         # Creacion del socket UDP para usarlo para mandar mensajes
         self.socketUtil = socket(AF_INET, SOCK_DGRAM)
@@ -75,8 +80,7 @@ class Dispatcher:
         #Buzon para los mensajes del handshake
         self.connMailbox = queue.Queue(MAXQUEUEZISE)
 
-        # Diccionario que contiene los sockets de las posibles conexiones
-        self.posibleConnections = queue.Queue(MAXQUEUEZISE)
+
 
         # Mapeo de conexiones
         self.connections ={}
@@ -91,6 +95,7 @@ class Dispatcher:
 
     # El dispatcher se quedara escuchando por mensajes nuevos mediante un thread
     def listen(self):
+        self.serverSocket.bind((self.ipDispatcher,self.portDispatcher))
         listenMessageThread = Thread(target=self.listenMessage)
         listenMessageThread.setDaemon(True)
         listenMessageThread.start()
@@ -102,7 +107,7 @@ class Dispatcher:
             # por una respuesta por lo que se debe manejar eso por aqui
 
             # Recibo el paquete mediante el socket UDP
-            packetMessage, clientAddress = self.socketUtil.recvfrom(MAXPACKETSIZE)
+            packetMessage, clientAddress = self.serverSocket.recvfrom(MAXPACKETSIZE)
 
             # Crea un hilo que se encarga de desencriptar el mensaje
             messageDecryptorThread = Thread(target=self.decryptPacket, args=(packetMessage))
@@ -273,29 +278,17 @@ class Dispatcher:
     # El paquete puede ser solo el SYN o el SYN y el ACK.
     def processHandshake(self,decryptedMessage,myIp,myPort,mySocket):
 
-
+        # Creo el socket que en caso de que se logre la conexion, será el que envía mensajes de respuesta al otro Nodo
         socketConexion = Dispatcher()
-        socketConexion.ipDispatcher = myIp
-        socketConexion.portDispatcher = myPort
-        socketConexion.ipDestination = decryptedMessage[IPORIGEN]
-        socketConexion.portDestination = decryptedMessage[PUERTOORIGEN]
         socketConexion.socketUtil = mySocket
         socketConexion.RN = (decryptedMessage[RN] + 1) % 2
         socketConexion.SN = 0
-        # Comienzo handshake en el nodo server
+
 
         # Añado esta conexión al mapa de conexiones del nodo
-        self.connections[(socketConexion.IPDestino, socketConexion.puertoDestino)] = socketConexion
+        self.posibleConnections[(socketConexion.IPDestino, socketConexion.puertoDestino)] = socketConexion
 
-        #Agregamos a la cola para iniciar el accept
-        self.posibleConnections.put_nowait(socketConexion)
-
-        # Respondo al nodo que esta esperando en connect
-        msgResponse = self.bitnator.encrypt(self.ipDispatcher,self.portDispatcher,socketConexion.ipDestination,
-                                            socketConexion.portDestination,1,socketConexion.RN,socketConexion.SN,
-                                            1,0,0)
-
-        self.socketUtil.sendto(msgResponse,(socketConexion.ipDestination,socketConexion.portDestination))
-
+        #Agregamos a la cola para iniciar el accept, esto hace que el método accept se empiece a ejecutar
+        self.keys.append((socketConexion.IPDestino, socketConexion.puertoDestino))
 
 
