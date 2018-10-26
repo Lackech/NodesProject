@@ -148,9 +148,8 @@ class Dispatcher:
         clientSocket = socket(AF_INET, SOCK_DGRAM)
         packetToSend = self.bitnator.encrypt(self.ipDispatcher, self.portDispatcher, self.ipDestination,
                                                 self.portDestination, 1, self.RN, self.SN,
-                                                1, 1, mensaje)
+                                                0, 0, mensaje)
 
-        clientSocket.sendto()
         clientSocket.sendto(packetToSend, (self.ipDestination, self.portDestination))
 
 
@@ -245,7 +244,7 @@ class Dispatcher:
             self.connMailbox.put_nowait(packetMessage)
 
         # Es mensaje de datos
-        elif packetMessage[SN] == self.SN:
+        elif packetMessage[SN] == self.RN:
             self.RN = (self.RN + 1) % 2
             # Envio el ACK y reviso si es mensaje final o no
             if packetMessage[FIN] == 1:
