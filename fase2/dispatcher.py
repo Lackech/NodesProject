@@ -146,8 +146,12 @@ class Dispatcher:
 
         # Creacion del socket UDP para usarlo para mandar mensajes
         clientSocket = socket(AF_INET, SOCK_DGRAM)
-        packetToSend = self.bitnator.encrypt()
+        packetToSend = self.bitnator.encrypt(self.ipDispatcher, self.portDispatcher, self.ipDestination,
+                                                self.portDestination, 1, self.RN, self.SN,
+                                                1, 1, mensaje)
+
         clientSocket.sendto()
+        clientSocket.sendto(packetToSend, (self.ipDestination, self.portDestination))
 
 
 
@@ -270,7 +274,6 @@ class Dispatcher:
     # Una vez que se detecto el SYN Flag encendio en el paquete se pasa a este metodo para procesarlo
     # El paquete puede ser solo el SYN o el SYN y el ACK.
     def processHandshake(self,decryptedMessage,myIp,myPort,mySocket):
-
 
         socketConexion = Dispatcher()
         socketConexion.ipDispatcher = myIp
