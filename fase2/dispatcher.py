@@ -151,7 +151,7 @@ class Dispatcher:
         acceptingSocket.close()
 
         try:
-            # Esperamos que nos llegue un mesnaje
+            # Esperamos que nos llegue un mensaje
             posibleSocket.mailbox.get()
 
             # Agregar informacion a la bitácora
@@ -166,9 +166,11 @@ class Dispatcher:
 
     # Se recibe el mensaje completo en el nodo, por lo que se revisa por paquete
     def recv(self):
-        #Se queda esperando hasta que en la lista haya un mensaje que devolver
-        while len(self.mailbox) == 0:
-            pass
+        while True:
+            # Esperamos a que nos llegue un mensaje
+            packetMessage = self.mailbox.get()
+            # 
+
 
         return self.mailbox.pop()
 
