@@ -101,22 +101,31 @@ class Dispatcher:
 
 
     def decryptPacket(self,packetMessage):
-        #Llama al método que desencripta un mensaje
-        decryptedMessage = self.bitnator.decryptPacket(packetMessage)
 
-        #Preguntamos sí el mensaje es la respuesta del cliente al ACK del servidor
-        if self.posibleConnections.get((decryptedMessage[IPORIGEN], decryptedMessage[PUERTOORIGEN])) is not None:
-            posibleSocket = self.posibleConnections.get((decryptedMessage[IPORIGEN], decryptedMessage[PUERTOORIGEN]))
-            posibleSocket.mailbox.append(decryptedMessage)
+        # Llama al método que desencripta un mensaje
+        decryptedMessage = self.bitnator.decrypt(packetMessage)
+
+        # Si la dirección que viene en el mensaje es correcta, además de que el ACK y SYN están en 0, quiere decir que la conexión sí puede iniciar
+        if decryptedMessage[IPDESTINO] == self.ipDispatcher and decryptedMessage[PUERTODESTINO] == self.portDispatcher:
+            if decryptedMessage[SYN] == 1 and decryptedMessage[ACK] == 1:
+                self.processHandshake(decryptedMessage)
+            else:
+                self.debugPacket(decryptedMessage)
         else:
-            #Guarda ese mensaje en la lista que tiene todos los mensajes que le llegan, pues el nodo se encarga de a que socket dárselo
-            self.mailbox.append(decryptedMessage)
+            # El paquete es ignorado
+            pass
+
+
 
 
 
     # El cliente crea la conexion con la info del destino
     def connect(self, ipAddress, port):
+
+
         pass
+
+
 
     # Acepta la conexion, en otras palabras el handshaking
     def accept(self):
