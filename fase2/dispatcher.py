@@ -2,11 +2,16 @@ from socket import *
 from threading import *
 from fase2.bitnator import *
 import threading
+import queue
 
 # Variables para identificar estado actual del socket
 LISTENING = 0
 CONNECTING = 1
 ESTABLISHED = 2
+
+# Timeouts
+TIMEOUT_CONNECT = 3
+
 
 # Variables para identificar las partes de un paquete
 IPORIGEN = 0
@@ -22,6 +27,7 @@ RELLENO = 9
 MENSAJE = 10
 
 MAXPACKETSIZE = 2048
+MAXQUEUEZISE = 0
 
 class Dispatcher:
 
@@ -37,6 +43,7 @@ class Dispatcher:
     ################################################################################################################
     def __init__(self):
         # Direccion IP y puerto del nodo que crea el socket
+
         self.ipDispatcher = ""
         self.portDispatcher = 0
 
@@ -59,10 +66,16 @@ class Dispatcher:
         self.bitnator = Bitnator()
 
         #Buzón donde se guardan los mensajes que se reciben
-        self.mailbox = []
+        self.mailbox = queue.Queue(MAXQUEUEZISE);
+
+        #Buzon para los mensajes del handshake
+        self.connMailbox = queue.Queue(MAXQUEUEZISE)
 
         # Diccionario que contiene los sockets de las posibles conexiones
-        self.posibleConnections = {}
+        self.posibleConnections = queue.Queue(MAXQUEUEZISE)
+
+        # Mapeo de conexiones
+        self.conexiones ={}
 
 
 
@@ -83,7 +96,7 @@ class Dispatcher:
             # por una respuesta por lo que se debe manejar eso por aqui
 
             # Recibo el paquete mediante el socket UDP
-            packetMessage, clientAddress = self.serverSocket.recvfrom(MAXPACKETSIZE)
+            packetMessage, clientAddress = self.socketUtil.recvfrom(MAXPACKETSIZE)
 
             # Crea un hilo que se encarga de desencriptar el mensaje
             messageDecryptorThread = Thread(target=self.decryptPacket, args=(packetMessage))
@@ -103,8 +116,8 @@ class Dispatcher:
 
         # Si la dirección que viene en el mensaje es correcta, además de que el ACK y SYN están en 0, quiere decir que la conexión sí puede iniciar
         if decryptedMessage[IPDESTINO] == self.ipDispatcher and decryptedMessage[PUERTODESTINO] == self.portDispatcher:
-            if decryptedMessage[SYN] == 1 and decryptedMessage[ACK] == 1:
-                self.processHandshake(decryptedMessage)
+            if decryptedMessage[SYN] == 1 and decryptedMessage[ACK] == 0:
+                self.processHandshake(decryptedMessage, self.ipDispatcher,self.portDispatcher,self.socketUtil)
             else:
                 self.debugPacket(decryptedMessage)
         else:
@@ -117,9 +130,26 @@ class Dispatcher:
 
     # El cliente crea la conexion con la info del destino
     def connect(self, ipAddress, port):
+        self.ipDestination = ipAddress
+        self.portDestination = port
+        self.SN = 1
 
 
-        pass
+        mensaje = []
+
+        # Creacion del socket UDP para usarlo para mandar mensajes
+        clientSocket = socket(AF_INET, SOCK_DGRAM)
+        packetToSend = self.bitnator.encrypt()
+        clientSocket.sendto()
+
+
+
+
+
+
+
+
+
 
     # Acepta la conexion, en otras palabras el handshaking
     def accept(self,decryptedMessage):
@@ -195,9 +225,38 @@ class Dispatcher:
 
     # Analiza el paquete, revisando el RN y SN y tomando la accion adecuada.
     def debugPacket(self,packetMessage):
-        pass
+        if packetMessage[SYN] == 1:
+            pass
+        else:
+
 
     # Una vez que se detecto el SYN Flag encendio en el paquete se pasa a este metodo para procesarlo
     # El paquete puede ser solo el SYN o el SYN y el ACK.
-    def processHandshake(self,packetMessage):
-        pass
+    def processHandshake(self,decryptedMessage,myIp,myPort,mySocket):
+
+
+        socketConexion = Dispatcher()
+        socketConexion.ipDispatcher = myIp
+        socketConexion.portDispatcher = myPort
+        socketConexion.ipDestination = decryptedMessage[IPORIGEN]
+        socketConexion.portDestination = decryptedMessage[PUERTOORIGEN]
+        socketConexion.socketUtil = mySocket
+        socketConexion.RN = (decryptedMessage[RN] + 1) % 2
+        socketConexion.SN = 0
+        # Comienzo handshake en el nodo server
+
+        # Añado esta conexión al mapa de conexiones del nodo
+        self.conexiones[(socketConexion.IPDestino, socketConexion.puertoDestino)] = socketConexion
+
+        #Agregamos a la cola para iniciar el accept
+        self.posibleConnections.put_nowait(socketConexion)
+
+        # Respondo al nodo que esta esperando en connect
+        msgResponse = self.bitnator.encrypt(self.ipDispatcher,self.portDispatcher,socketConexion.ipDestination,
+                                            socketConexion.portDestination,1,socketConexion.RN,socketConexion.SN,
+                                            1,0,0)
+
+        self.socketUtil.sendto(msgResponse,(socketConexion.ipDestination,socketConexion.portDestination))
+
+
+
