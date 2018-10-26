@@ -1,3 +1,4 @@
+import queue
 from socket import *
 from threading import *
 from fase2.bitnator import *
@@ -55,6 +56,9 @@ class Dispatcher:
         self.SN = 0
         self.RN = 0
         self.lock = threading.Lock()
+
+        # Lista d que contiene los Keys con los que se puede identificar el posible socket con el que se esta realizando la conexión
+        self.keys = []
 
         # Creacion del socket UDP para usarlo para mandar mensajes
         self.socketUtil = socket(AF_INET, SOCK_DGRAM)
@@ -154,55 +158,51 @@ class Dispatcher:
 
 
 
+
+
     # Acepta la conexion, en otras palabras el handshaking
-    def accept(self,decryptedMessage):
-
-            # Encriptamos el mensaje donde se devuelve un ACK al cliente
-            acceptingMessage = self.bitnator.encrypt(
-                origenIp=self.ipDispatcher,
-                origenPort=self.portDispatcher,
-                destinationIp=decryptedMessage[IPORIGEN],
-                destinationPort=decryptedMessage[PUERTOORIGEN],
-                syn=0,
-                rn=0,
-                sn=0,
-                ack=1,
-                fin=0,
-                message=""
-            )
-
-            # Creacion del socket UDP por e que se va a enviar el mensaje de aceptación
-            acceptingSocket = socket(AF_INET, SOCK_DGRAM)
-            # Enviamos el mensaje de aceptación
-            acceptingSocket.sendto(acceptingMessage, (decryptedMessage[IPORIGEN], decryptedMessage[PUERTOORIGEN]))
-            acceptingSocket.close()
-
-            # Creamos un socket que se toma como un posible socket de conexión, en caso de que el handshake se efectue correctamente
-            posibleSocket = Dispatcher()
-            data = {(decryptedMessage[IPORIGEN], decryptedMessage[PUERTOORIGEN]),posibleSocket}
-            self.posibleConnections.update(data)
-
-            # Esperamos una respuesta del cliente
-            while len(posibleSocket.mailbox) == 0:
-                pass
-            finalAnswer = posibleSocket.mailbox.pop()
-
-
-            # Si el cliente responde correctamente devolvemos el socet ya con toda la información para trabajar, si sale mal descartamos la conexión
-            if finalAnswer[SYN] == 1 and finalAnswer[ACK] == 1 and finalAnswer[IPDESTINO] == self.ipDispatcher and finalAnswer[PUERTODESTINO] == self.portDispatcher:
-                # Sacamos del diccionario de posibles conexiones el socket, pues ya es una conexión establecida
-                self.posibleConnections.pop((decryptedMessage[IPORIGEN], decryptedMessage[PUERTOORIGEN]))
-
-                # Retornamos los datos necesarios para que el nodo pueda trabajar
-                return posibleSocket,(finalAnswer[IPORIGEN], finalAnswer[PUERTOORIGEN])
-
-            else:
-                # Sacamos del diccionario de posibles conexiones el socket, pues la conexión no se pudo establecer correctamente
-                self.posibleConnections.pop((decryptedMessage[IPORIGEN], decryptedMessage[PUERTOORIGEN]))
-
-        # Quiere decir que el mensaje recibido no fue el correcto, por lo que no hace nada
-        else:
+    def accept(self):
+        # Esperamos a que en la lista con los que de las posibles conexiones haya al menos una Key
+        while len(self.keys) == 0:
             pass
+
+        # Optenemos el primer key que hay en la lista
+        key = self.keys.pop()
+        # Obtenemos el socket asociado a ese key
+        posibleSocket = self.posibleConnections.pop(key)
+
+        # Encriptamos el mensaje donde se devuelve un ACK al cliente
+        acceptingMessage = self.bitnator.encrypt(
+            origenIp=self.ipDispatcher,
+            origenPort=self.portDispatcher,
+            destinationIp=key[0],
+            destinationPort=key[1],
+            syn=0,
+            rn=0,
+            sn=0,
+            ack=1,
+            fin=0,
+            message=""
+        )
+
+        # Creacion del socket UDP por e que se va a enviar el mensaje de aceptación
+        acceptingSocket = socket(AF_INET, SOCK_DGRAM)
+        # Enviamos el mensaje de aceptación
+        acceptingSocket.sendto(acceptingMessage, (key[0], key[1]))
+        #Cerramos la conexión del socket UDP
+        acceptingSocket.close()
+
+        try:
+            # Esperamos que nos llegue un mesnaje
+            posibleSocket.mailbox.get()
+
+            # Agregar informacion a la bitácora
+
+            return posibleSocket,key
+        except:
+            # Agregar informacion a la bitácora
+            pass
+
 
 
 
@@ -217,7 +217,8 @@ class Dispatcher:
 
 
     # Se envia el mensaje, se envia por paquetes por lo que se analiza su encabezado para ver su comportamiento
-    def send(self):
+    def send(self,message):
+
         pass
 
     # Cierra la conexion despues del envio, por lo que se cierra en dos pasos(msj - ack)
