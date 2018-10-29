@@ -166,3 +166,9 @@ class Application:
     def optainSendingMessage(self):
         string = "holamundo"
         return string
+
+
+    def createLog(self):
+        file = open("log.txt","w+")
+        file.write("IP_ORIGEN,PUERTO_ORIGEN,IP_DESTINO,PUERTO_DESTINO,TIPO_PAQUETE,SN, RN, ACK, FIN\n")
+        file.close()
