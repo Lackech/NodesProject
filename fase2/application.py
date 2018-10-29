@@ -54,9 +54,8 @@ class Application:
     def nodeCreation(self):
         self.interface.showMessage(self.greetingMessage)
 
-        nodeAddress = self.getNodeInformation()
-        self.node = NodeUdp(nodeAddress)
-
+        nodeIp,nodePort = self.getNodeInformation()
+        self.node = NodeUdp(nodeIp,nodePort)
 
 
 
@@ -68,14 +67,15 @@ class Application:
                 self.interface.showMessage(self.warningMessage + nodeOption + self.invalidOptionMessage)
                 nodeOption = self.interface.getInput(self.nodeOptionMessage)
 
+            nodeOption = int(nodeOption)
             if nodeOption is 1:
             # El nodo va a iniciar una conexion
                 self.interface.showMessage(self.createConnectionMessage)
 
-                connectingNodeAddress = self.getNodeInformation()
-                while self.node.startConnection(connectingNodeAddress) is False:
-                    self.interface.showMessage(self.warningMessage + "(" + connectingNodeAddress[0] + "," + connectingNodeAddress[1] + ")" + self.invalidNodeMessage)
-                    connectingNodeAddress = self.getNodeInformation()
+                otherIp,otherPort = self.getNodeInformation()
+                while self.node.startConnection(otherIp,otherPort) is False:
+                    self.interface.showMessage(self.warningMessage + "(" + otherIp + "," + str(otherPort) + ")" + self.invalidNodeMessage)
+                    otherIp, otherPort = self.getNodeInformation()
 
             else:
                 if nodeOption is 2:
@@ -124,7 +124,7 @@ class Application:
         valid = True
 
         try:
-            if argument <= 0 and argument > numberOfOptions:
+            if int(argument) <= 0 and int(argument) > numberOfOptions:
                 valid = False
         except:
             valid = False
@@ -143,14 +143,12 @@ class Application:
         return nodeIp
 
     def optainNodePort(self):
-        nodePort = -1
+        nodePort = self.interface.getInput(self.portMessage)
         while self.router.validPort(nodePort) is False:
+            self.interface.showMessage(self.warningMessage + nodePort + self.invalidPortMessage)
             nodePort = self.interface.getInput(self.portMessage)
 
-            if self.router.validPort(nodePort) is False:
-                self.interface.showMessage(self.warningMessage + nodePort + self.invalidPortMessage)
-
-        return nodePort
+        return int(nodePort)
 
     def optainNodeMascara(self,tipoRed):
         nodeMascara = -1
@@ -165,8 +163,7 @@ class Application:
     def getNodeInformation(self):
         nodeIp = self.optainNodeIp()
         nodePort = self.optainNodePort()
-        nodeAddress = (nodeIp,nodePort)
-        return nodeAddress
+        return nodeIp,nodePort
 
 
 

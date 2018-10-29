@@ -10,7 +10,7 @@ class NodeUdp:
         self.port = port
 
         #Creamos el servidor que se va a encargar de recibir todos los mensajes, que vengan de otro nodo
-        self.serverSocket = Dispatcher()
+        self.serverSocket = Socket()
 
         # Mapa que contiene toda la informaión de los sockets con los que actualmente está conectado
         self.socketMapping = {}
@@ -22,7 +22,7 @@ class NodeUdp:
         self.alive = True
 
         #Creamos el thread
-        self.listener = threading.Thread(name='daemon',target=self.listen)
+        self.listener = threading.Thread(name='server',target=self.listen)
         self.listener.setDaemon(True)
         self.listener.start()
 
@@ -37,10 +37,10 @@ class NodeUdp:
 
         while self.alive:
             try:
-                connectionSocket,otherAddress = self.serverSocket.accept()
+                connectionSocket = self.serverSocket.accept()
 
                 # Creamos el thread
-                socketThread = threading.Thread(name='daemon', target=self.listenMessage, args=(connectionSocket, otherAddress))
+                socketThread = threading.Thread(name='reciver', target=self.listenMessage, args=(connectionSocket, otherAddress))
                 socketThread.setDaemon(True)
                 socketThread.start()
                 # Agregar info a bitácora
@@ -54,11 +54,11 @@ class NodeUdp:
 
 
     # Escucha cada conexion para procesar el mensaje
-    def listenMessage(self, connectionSocket, clientAddress):
+    def listenMessage(self, connectionSocket):
         while self.alive:
             try:
                 # Aquí esperamos que al socket le lleguen todos los paquetes del mensaje y lo recibimos
-                packetMessage = connectionSocket.recv(MAXPACKETSIZE)
+                packetMessage = connectionSocket.recv()
 
                 # Agregar info a bitacora
             except:
@@ -69,12 +69,21 @@ class NodeUdp:
     # Método con el que se empieza la conexión con otro nodo
     def startConnection(self,otherIp,otherPort):
         success = True
+        if otherIp == 'localhost':
+            otherIp = '127.0.0.1'
 
-        clientSocket = Dispatcher()
+        clientSocket = Socket()
+        clientSocket.bind(self.ip,self.port)
         otherAddress = (otherIp,otherPort)
         try:
+            # Lo agregamos al mapa de posibles conexiones que contiene el servidor
+            self.serverSocket.posibleConnections[otherAddress] = clientSocket
+            # Iniciamos la conexión
             clientSocket.connect(otherIp,otherPort)
-            self.socketMapping[otherAddress] = clientSocket
+            # Si se logró correctamente lo agregamos al mapa de conexiones establecidas y lo eliminamos de las posibles conexiones
+            self.serverSocket.posibleConnections.pop(otherAddress)
+            self.serverSocket.acceptedConnections[otherAddress] = clientSocket
+
             #Agregar info a bitácora
         except:
             success = False

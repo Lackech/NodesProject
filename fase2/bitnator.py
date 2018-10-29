@@ -4,14 +4,6 @@ FLAG = 3
 
 class Bitnator:
 
-    #E BItnator debe ser capaz de codificar headers, mensajes, banderas y los demás bits que nos permiten saber que
-    #que tipo de mensaje es
-
-    #También debe poder decodificar todo lo que mencionamos anteriormente
-
-    def __init__(self, node):
-        self.node = node
-
     def encrypt(self,origenIp,origenPort,destinationIp,destinationPort,syn,rn,sn,ack,fin,message):
         encriptedMessage = bytearray()
 
@@ -26,10 +18,7 @@ class Bitnator:
         encriptedMessage += represetntativeValue.to_bytes(1,'big')
 
         # Encriptamos el dato que va a evniar el mensaje
-        represetntativeValue += int(ord(message)).to_bytes(1,'big')
-
-        # Agregamos el mensaje al encriptedMessage
-        encriptedMessage += represetntativeValue
+        encriptedMessage += message.encode('utf-8')
 
         # Retornamos el mensaje encriptado
         return encriptedMessage
@@ -46,39 +35,39 @@ class Bitnator:
         return encriptedIp
 
 
-    def decrypt(self, packet):
+    def decrypt(self, a,b,c,d,e,f,g,h,i,j,k,l,m,n):
         # Obtenmos el dato enviado ya en su forma desencriptada
-        message = chr(packet.pop())
+        message = chr(n)
 
         # Obtenemos el conjunto de banderas que viene en un byte del mensaje
-        flags = packet.pop()
+        flags = m
         # Nos desasemos de los bits de relleno
-        flags = flags / 2
-        flags = flags / 2
-        flags = flags / 2
+        flags = int(flags / 2)
+        flags = int(flags / 2)
+        flags = int(flags / 2)
         # Ahora con el módulo empezamos a preguntar si el valor de cada bandera es 1 o 0
-        fin = flags % 2
-        flags = flags / 2
-        ack = flags % 2
-        flags = flags / 2
-        sn = flags % 2
-        flags = flags / 2
-        rn = flags % 2
-        flags = flags / 2
-        syn = flags % 2
+        fin = int(flags % 2)
+        flags = int(flags / 2)
+        ack = int(flags % 2)
+        flags = int(flags / 2)
+        sn = int(flags % 2)
+        flags = int(flags / 2)
+        rn = int(flags % 2)
+        flags = int(flags / 2)
+        syn = int(flags % 2)
 
 
         # Obtenemos la dirección de la dirección destino
-        destinationPort = packet.pop() + packet.pop() * 256
+        destinationPort = l + k * 256
         # Como a la hora de realizar por se optinene primero el número de más a la derecha, se creo un método que acomodaba el Ip de la forma correcta
-        destinationIp = self.acomodateIp(str(packet.pop()), str(packet.pop()), str(packet.pop()), str(packet.pop()))
+        destinationIp = str(g) + '.' + str(h) + '.' + str(i) + '.' + str(j)
 
         # Obtenemos la dirección de la dirección origen
-        origenPort = packet.pop() + packet.pop() * 256
+        origenPort = f + e * 256
         # Como a la hora de realizar por se optinene primero el número de más a la derecha, se creo un método que acomodaba el Ip de la forma correcta
-        origenIp = self.acomodateIp(str(packet.pop()), str(packet.pop()), str(packet.pop()), str(packet.pop()))
+        origenIp = str(a) + '.' + str(b) + '.' + str(c) + '.' + str(d)
 
-        return (origenIp,origenPort,destinationIp,destinationPort,syn,rn,sn,fin,message)
+        return (origenIp,origenPort,destinationIp,destinationPort,syn,rn,sn,ack,fin,message)
 
 
 
