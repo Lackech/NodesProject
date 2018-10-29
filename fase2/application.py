@@ -30,14 +30,13 @@ class Application:
                             "\t1. Start connection\n"
                             "\t2. Send a trial message\n"
                             "\t3. Close a connection\n"
-                            "\t4. Close all connection\n"
-                            "\t5. Show the log history\n"
+                            "\t4. Show the log history\n"
                             "\tWrite your option here --> ")
 
         self.createConnectionMessage = "Greate!! Lets create this new connection..."
         self.sendTrialMessage = "Ok, lets send a random message"
         self.closeConnectionMessage = "Well, if you want to close a connection, lets do it"
-        self.closeConnectionMessage = "Closing all connections..."
+        self.closeAllConnectionsMessage = "Closing all connections..."
 
         self.listOfConnectionMessage = "Please choose one of the following connections:\n"
 
@@ -63,7 +62,7 @@ class Application:
         while self.node.alive:
 
             nodeOption = self.interface.getInput(self.nodeOptionMessage)
-            while self.isValid(nodeOption, 5) is False:
+            while self.isValid(nodeOption, 4) is False:
                 self.interface.showMessage(self.warningMessage + nodeOption + self.invalidOptionMessage)
                 nodeOption = self.interface.getInput(self.nodeOptionMessage)
 
@@ -100,23 +99,19 @@ class Application:
                         self.interface.showMessage(self.closeConnectionMessage)
 
                         connectingOption = self.interface.getInput(
-                            self.listOfConnectionMessage + self.node.getConnectionList)
+                            self.listOfConnectionMessage + self.node.getConnectionList())
 
-                        while self.isValid(connectingOption, self.node.numOpenConnections) is False:
+                        while self.isValid(connectingOption, self.node.numOpenConnections()) is False:
                             self.interface.showMessage(self.warningMessage + connectingOption + self.invalidOptionMessage)
                             connectingOption = self.interface.getInput(
-                                self.listOfConnectionMessage + self.node.getConnectionList)
+                                self.listOfConnectionMessage + self.node.getConnectionList())
 
-                        self.node.closeConnection(connectingOption)
+                        address = self.node.getSelectedAddress(int(connectingOption))
+                        self.node.closeConnection(address)
 
                     else:
                         if nodeOption is 4:
-                        # Cierra todas las conexiones
-                            self.node.alive = 0
-                            self.node.closeAllConnection()
-
-                        else:
-                        # Muestra la informacion que hay en el log
+                            # Muestra la informacion que hay en el log
                             self.interface.showMessage(self.node.getLogHistory())
 
 

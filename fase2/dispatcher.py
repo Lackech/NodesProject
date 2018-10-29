@@ -65,6 +65,7 @@ class Socket:
         # Estado del socket
         self.connected = False
         self.alive = True
+        self.closing = False
 
         # Lista d que contiene los Keys con los que se puede identificar el posible socket con el que se esta realizando la conexión
         self.keys = []
@@ -153,7 +154,7 @@ class Socket:
             elif decryptedMessage[SYN] == 1 and decryptedMessage[ACK] == 0 and decryptedMessage[FIN] == 1:
             # Entramos en el caso donde el paquete recibido es de tipo cierre de conexión
                 # Lo agregamos a la cola que guarda paquete de conexión
-                self.connMailbox.put_nowait(decryptedMessage)
+                self.processClosing(decryptedMessage)
 
             else:
                 otherAddress = (decryptedMessage[IPORIGEN],decryptedMessage[PUERTOORIGEN])
@@ -414,21 +415,24 @@ class Socket:
 
     # Cierra la conexion despues del envio, por lo que se cierra en dos pasos(msj - ack)
     def close(self):
+        self.closing = True
+
         # Creamos el paquete de close
-        closeMessage = self.bitnator.encrypt(
-            origenIp=self.ipDispatcher,
-            origenPort=self.portDispatcher,
-            destinationIp=self.ipDestination,
-            destinationPort=self.portDestination,
+        packet = self.bitnator.encrypt(
+            origenIp=self.myIp,
+            origenPort=self.myPort,
+            destinationIp=self.destinationIp,
+            destinationPort=self.destinationPort,
             syn=1,
-            rn=0,
+            rn=self.RN,
             sn=self.SN,
             ack=0,
             fin=1,
-            message=""
+            message="s"
         )
 
-
+        # Enviamos el paquete
+        self.sendPacket(packet, (self.destinationIp, self.destinationPort))
 
         try:
             # Si le llega un mesaje quiere decir que al otro le llego, pero independientemente de si le llega o no el nodo se muere
@@ -436,6 +440,36 @@ class Socket:
             answerMessage = self.connMailbox.get()
         except:
             pass
+        finally:
+            self.alive = False
+
+
+
+
+
+
+    def processClosing(self,decryptedMessage):
+        socket = self.acceptedConnections.pop((decryptedMessage[IPORIGEN],decryptedMessage[PUERTOORIGEN]))
+
+        if socket.closing is False:
+            # Creamos el paquete de close
+            packet = self.bitnator.encrypt(
+                origenIp=socket.myIp,
+                origenPort=socket.myPort,
+                destinationIp=socket.destinationIp,
+                destinationPort=socket.destinationPort,
+                syn=1,
+                rn=socket.RN,
+                sn=socket.SN,
+                ack=0,
+                fin=1,
+                message="s"
+            )
+
+            self.sendPacket(packet, (socket.destinationIp, socket.destinationPort))
+            socket.alive = False
+        else:
+            socket.connMailbox.put_nowait(decryptedMessage)
 
 
 

@@ -99,15 +99,15 @@ class NodeUdp:
 
 
 
+
+
     #Método que cierra la conexion con el nodo seleccionado
-    def closeConnection(self):
-        return 0
+    def closeConnection(self,otherAddress):
+        clientSocket = self.serverSocket.acceptedConnections[otherAddress]
+        clientSocket.close()
 
 
 
-    #Método que cierra todas las conexiones
-    def closeAllConnection(self):
-        return 0
 
 
     # Metodo que envia mensajes a otra conexion
@@ -138,7 +138,7 @@ class NodeUdp:
 
         for connection in self.serverSocket.acceptedConnections:
             stringList += "\t" + str(num) + ". (" + connection[0] + "," + str(connection[1]) + ")\n"
-            ++num
+            num = num + 1
 
         return stringList
 
@@ -152,7 +152,7 @@ class NodeUdp:
                 address = connection
                 break
             else:
-                ++i
+                i = i + 1
 
         return address
 
