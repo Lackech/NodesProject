@@ -40,7 +40,7 @@ class NodeUdp:
                 connectionSocket = self.serverSocket.accept()
 
                 # Creamos el thread
-                socketThread = threading.Thread(name='reciver', target=self.listenMessage, args=(connectionSocket, otherAddress))
+                socketThread = threading.Thread(name='reciver', target=self.listenMessage, args=[connectionSocket])
                 socketThread.setDaemon(True)
                 socketThread.start()
                 # Agregar info a bitácora
@@ -58,7 +58,8 @@ class NodeUdp:
         while self.alive:
             try:
                 # Aquí esperamos que al socket le lleguen todos los paquetes del mensaje y lo recibimos
-                packetMessage = connectionSocket.recv()
+                message = connectionSocket.recv()
+                print(message)
 
                 # Agregar info a bitacora
             except:
@@ -84,6 +85,11 @@ class NodeUdp:
             self.serverSocket.posibleConnections.pop(otherAddress)
             self.serverSocket.acceptedConnections[otherAddress] = clientSocket
 
+            # Creamos el thread
+            socketThread = threading.Thread(name='reciver', target=self.listenMessage, args=[clientSocket])
+            socketThread.setDaemon(True)
+            socketThread.start()
+
             #Agregar info a bitácora
         except:
             success = False
@@ -107,10 +113,21 @@ class NodeUdp:
     # Metodo que envia mensajes a otra conexion
     def send(self,otherAddress,message):
         # Obtiene la conexión ya existente con el otro nodo
-        clientSocket = self.socketMapping[otherAddress]
+        if self.serverSocket.acceptedConnections.get(otherAddress) is not None:
+            clientSocket = self.serverSocket.acceptedConnections[otherAddress]
+            # Envía el mensaje por medio del socket
+            clientSocket.send(message)
+        else:
+            if self.startConnection(otherAddress[0],otherAddress[1]) is True:
+                clientSocket = self.serverSocket.acceptedConnections[otherAddress]
+                # Envía el mensaje por medio del socket
+                clientSocket.send(message)
+            else:
+                # No se logro enviar el mensaje
+                pass
 
-        # Envía el mensaje por medio del socket
-        clientSocket.send(message)
+
+
 
 
 
@@ -119,14 +136,28 @@ class NodeUdp:
         stringList = ""
         num = 1
 
-        for connection in self.connectionList:
-            stringList += "\t" + num + ". (" + connection[0] + "," + connection[1] + ")\n"
+        for connection in self.serverSocket.acceptedConnections:
+            stringList += "\t" + str(num) + ". (" + connection[0] + "," + str(connection[1]) + ")\n"
             ++num
 
         return stringList
 
 
 
+    def getSelectedAddress(self,num):
+        i = 1
+        address = None
+        for connection in self.serverSocket.acceptedConnections:
+            if i == num:
+                address = connection
+                break
+            else:
+                ++i
+
+        return address
+
+
+
     # Metodo que retorna el numero de conexiones que hay abiertas en ese momento
     def numOpenConnections(self):
-        return len(self.connectionList)
+        return len(self.serverSocket.acceptedConnections)

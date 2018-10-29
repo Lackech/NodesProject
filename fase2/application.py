@@ -83,15 +83,16 @@ class Application:
                     self.interface.showMessage(self.sendTrialMessage)
 
                     connectingOption = self.interface.getInput(
-                        self.listOfConnectionMessage + self.node.getConnectionList)
+                        self.listOfConnectionMessage + self.node.getConnectionList())
 
-                    while self.isValid(connectingOption,self.node.numOpenConnections) is False:
+                    while self.isValid(connectingOption,self.node.numOpenConnections()) is False:
                         self.interface.showMessage(self.warningMessage + connectingOption + self.invalidOptionMessage)
                         connectingOption = self.interface.getInput(
-                            self.listOfConnectionMessage + self.node.getConnectionList)
+                            self.listOfConnectionMessage + self.node.getConnectionList())
 
-                    message = self.messageGenerator.randomMessage()
-                    self.node.send(connectingOption,message)
+                    message = self.optainSendingMessage()
+                    address = self.node.getSelectedAddress(int(connectingOption))
+                    self.node.send(address,message)
 
                 else:
                     if nodeOption is 3:
@@ -169,3 +170,4 @@ class Application:
 
     def optainSendingMessage(self):
         string = "holamundo"
+        return string

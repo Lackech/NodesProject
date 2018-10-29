@@ -22,8 +22,7 @@ RN = 5
 SN = 6
 ACK = 7
 FIN = 8
-RELLENO = 9
-MENSAJE = 10
+MENSAJE = 9
 
 MAXPACKETSIZE = 2048
 MAXQUEUEZISE = 5
@@ -214,7 +213,6 @@ class Socket:
         else:
             self.destinationIp = ip
         self.destinationPort = port
-        self.SN = 1
 
         # Encriptamos un paquete con los flags necesarios para avisar al servidor del otro nodo
         # que es un mensaje de tipo connect
@@ -301,8 +299,8 @@ class Socket:
             destinationIp=posibleSocket.destinationIp,
             destinationPort=posibleSocket.destinationPort,
             syn=1,
-            rn=0,
-            sn=0,
+            rn=self.RN,
+            sn=self.SN,
             ack=1,
             fin=0,
             message="f"
@@ -331,64 +329,23 @@ class Socket:
 
 
 
-    # Se recibe el mensaje completo en el nodo, por lo que se revisa por paquete
-    def recv(self):
-        message = ""
-        completed = False
-
-        while completed:
-            # Esperamos a que nos llegue un paquete
-            packetMessage = self.messageMailbox.get()
-            message += packetMessage[MENSAJE]
-
-            if packetMessage[FIN] == 1:
-                completed = True
-
-            # Cuando nos llega un mensaje revisamos si el rn y el sn están correctos
-            if self.RN == packetMessage[SN]:
-                self.RN = (self.RN + 1) % 2
-
-            ackMessage = self.bitnator.encrypt(
-                origenIp=self.myIp,
-                origenPort=self.myPort,
-                destinationIp=packetMessage[IPORIGEN],
-                destinationPort=packetMessage[PUERTOORIGEN],
-                syn=0,
-                rn=self.RN,
-                sn=0,
-                ack=1,
-                fin=0,
-                message=""
-            )
-
-            # Creacion del socket UDP por e que se va a enviar el mensaje de aceptación
-            ackSocket = socket(AF_INET, SOCK_DGRAM)
-            # Enviamos el mensaje de aceptación
-            ackSocket.sendto(ackMessage, (packetMessage[IPORIGEN],packetMessage[PUERTOORIGEN]))
-            # Cerramos la conexión del socket UDP
-            ackSocket.close()
-
-        return message
-
-
-
-
-
     # Se envia el mensaje, se envia por paquetes por lo que se analiza su encabezado para ver su comportamiento
     def send(self,message):
         fin = 0
         success = False
         for i in range(0,len(message)):
+            success = False
+
             if i == len(message) - 1:
                 fin = 1
 
-            dataMessage = self.bitnator.encrypt(
-                origenIp=self.ipDispatcher,
-                origenPort=self.portDispatcher,
-                destinationIp=self.ipDestination,
-                destinationPort=self.portDestination,
+            packet = self.bitnator.encrypt(
+                origenIp=self.myIp,
+                origenPort=self.myPort,
+                destinationIp=self.destinationIp,
+                destinationPort=self.destinationPort,
                 syn=0,
-                rn=0,
+                rn=self.RN,
                 sn=self.SN,
                 ack=0,
                 fin=fin,
@@ -397,22 +354,59 @@ class Socket:
 
 
             while success == False:
-                # Creacion del socket UDP por e que se va a enviar el mensaje de aceptación
-                ackSocket = socket(AF_INET, SOCK_DGRAM)
-                # Enviamos el mensaje de aceptación
-                ackSocket.sendto(dataMessage, (self.ipDestination, self.portDestination))
-                # Cerramos la conexión del socket UDP
-                ackSocket.close()
+                # Enviamos el paquete
+                self.sendPacket(packet, (self.destinationIp, self.destinationPort))
 
                 try:
-                    ackMessage = self.ackMailbox.get()
-                    if ackMessage[RN] != self.SN:
-                        self.SN = ackMessage[RN]
+                    packet = self.ackMailbox.get()
 
-                    success = True
+                    if packet[RN] != self.SN:
+                        self.SN = packet[RN]
+                        success = True
+
                 except:
                     # No hacemos nada pues el mensaje se vuelve a enviar con el while
                     pass
+
+
+
+
+
+    # Se recibe el mensaje completo en el nodo, por lo que se revisa por paquete
+    def recv(self):
+        message = ""
+        completed = False
+
+        while completed is False:
+            # Esperamos a que nos llegue un paquete
+            packetMessage = self.messageMailbox.get()
+
+            # Cuando nos llega un mensaje revisamos si el rn y el sn están correctos
+            if self.RN == packetMessage[SN]:
+                self.RN = (self.RN + 1) % 2
+
+                message += packetMessage[MENSAJE]
+
+                if packetMessage[FIN] == 1:
+                    completed = True
+
+            packet = self.bitnator.encrypt(
+                origenIp=self.myIp,
+                origenPort=self.myPort,
+                destinationIp=self.destinationIp,
+                destinationPort=self.destinationPort,
+                syn=0,
+                rn=self.RN,
+                sn=self.SN,
+                ack=1,
+                fin=0,
+                message="f"
+            )
+
+            # Enviamos el paquete
+            self.sendPacket(packet, (self.destinationIp, self.destinationPort))
+
+        return message
 
 
 
