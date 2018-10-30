@@ -12,7 +12,7 @@ class NodeUdp:
         # Candado para la bitacora
         self.lock = threading.Lock()
         #Creamos el servidor que se va a encargar de recibir todos los mensajes, que vengan de otro nodo
-        self.serverSocket = Socket()
+        self.serverSocket = Socket(self.lock)
 
         # Mapa que contiene toda la informaión de los sockets con los que actualmente está conectado
         self.socketMapping = {}
@@ -75,7 +75,7 @@ class NodeUdp:
         if otherIp == 'localhost':
             otherIp = '127.0.0.1'
 
-        clientSocket = Socket()
+        clientSocket = Socket(self.lock)
         clientSocket.bind(self.ip,self.port)
         otherAddress = (otherIp,otherPort)
         try:

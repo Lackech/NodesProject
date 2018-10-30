@@ -49,10 +49,12 @@ class Socket:
     # Mensaje para finalizar la conexión: ||SYN = 1, ACK = 0, FIN = 1||
 
 
-    def __init__(self):
+    def __init__(self,lock):
         # Direccion IP y puerto del nodo que crea el socket
         self.myIp = ""
         self.myPort = 0
+
+        self.lockSocket = lock
 
         # Direccion IP y puerto del otro extremo del socket
         self.destinationIp = ""
@@ -230,6 +232,11 @@ class Socket:
             message='f'
         )
 
+        # Escribo en la bitacora el paquete de inicio de handshake
+        self.writeLog(self.myIp, self.myPort, self.destinationIp,
+                      self.destinationPort, "Inicio Handshake Cliente", self.SN, self.RN,
+                      0, 0,self.lockSocket)
+
         # Enviamos el paquete
         self.sendPacket(packet,(self.destinationIp,self.destinationPort))
 
@@ -251,13 +258,23 @@ class Socket:
                 message='f'
             )
 
+            # Escribo en la bitacora el paquete de inicio de handshake
+            self.writeLog(self.myIp, self.myPort, self.destinationIp,
+                          self.destinationPort, "Paso 2 Handshake Cliente", self.SN, self.RN,
+                          1, 1, self.lockSocket)
+
             self.connected = True
             self.sendPacket(packet, (self.destinationIp, self.destinationPort))
 
-            # Agregar informacion a la bitácora
+
+
+
         except:
             # Agregar informacion a la bitácora
-            pass
+            # Escribo en la bitacora el paquete de inicio de handshake
+            self.writeLog(self.myIp, self.myPort, self.destinationIp,
+                          self.destinationPort, "Paso 2 Handshake Cliente no se pudo completar", self.SN, self.RN,
+                          1, 1, self.lockSocket)
 
 
 
@@ -266,12 +283,13 @@ class Socket:
     # Se encarga de activar el accept desde el lado del servidor
     def processHandshake(self,decryptedMessage):
         # Creo el socket que en caso de que se logre la conexion, será el que envía mensajes de respuesta al otro Nodo
-        posibleSocket = Socket()
+        posibleSocket = Socket(self.lockSocket)
         posibleSocket.bind(self.myIp,self.myPort)
         posibleSocket.destinationIp = decryptedMessage[IPORIGEN]
         posibleSocket.destinationPort = decryptedMessage[PUERTOORIGEN]
         posibleSocket.RN = decryptedMessage[RN]
         posibleSocket.SN = decryptedMessage[SN]
+
 
         # Añado esta conexión al mapa de conexiones del nodo
         self.posibleConnections[(decryptedMessage[IPORIGEN], decryptedMessage[PUERTOORIGEN])] = posibleSocket
@@ -307,6 +325,12 @@ class Socket:
             message="f"
         )
 
+        # Escribo en la bitacora el paquete de fin de cliente de handshake
+        self.writeLog(self.myIp, self.myPort, posibleSocket.destinationIp,
+                      posibleSocket.destinationPort, "ACK Paso 1 Handshake Server", self.SN, self.RN,
+                      1, 0, self.lockSocket)
+
+
         # Enviamos el paquete
         self.sendPacket(packet, (posibleSocket.destinationIp,posibleSocket.destinationPort))
 
@@ -321,10 +345,18 @@ class Socket:
 
             # Agregar informacion a la bitácora
 
+            # Escribo en la bitacora el paquete de fin de cliente de handshake
+            self.writeLog(self.myIp, self.myPort, posibleSocket.destinationIp,
+                          posibleSocket.destinationPort, "ACK Paso 3 Fin Handshake Server", self.SN, self.RN,
+                          1, 1, self.lockSocket)
+
             return posibleSocket
         except:
             # Agregar informacion a la bitácora
-            pass
+            # Escribo en la bitacora el paquete de fin de cliente de handshake
+            self.writeLog(self.myIp, self.myPort, posibleSocket.destinationIp,
+                          posibleSocket.destinationPort, "ACK Paso 3 Fin Handshake Server no se pudo completar", self.SN, self.RN,
+                          1, 1, self.lockSocket)
 
 
 
@@ -355,6 +387,12 @@ class Socket:
 
 
             while success == False:
+
+                # Escribo en la bitacora el paquete de fin de cliente de handshake
+                self.writeLog(self.myIp, self.myPort, self.destinationIp,
+                              self.destinationPort, "Envio de datos", self.SN, self.RN,
+                              0, fin, self.lockSocket)
+
                 # Enviamos el paquete
                 self.sendPacket(packet, (self.destinationIp, self.destinationPort))
 
@@ -486,7 +524,7 @@ class Socket:
 
     def writeLog(self,IP_ORIGEN,PUERTO_ORIGEN,IP_DESTINO,PUERTO_DESTINO,TIPO_PAQUETE,SN, RN, ACK, FIN, lock):
         lock.acquire()
-        file = open("log.txt","w")
-        file.write(IP_ORIGEN + "--" + PUERTO_ORIGEN + "--" + IP_DESTINO + "--" + PUERTO_DESTINO + "--" + TIPO_PAQUETE + "--" + SN + "--" +RN + "--" +ACK + "--" +FIN )
+        file = open("log.txt","a+")
+        file.write(str(IP_ORIGEN) + "--" + str(PUERTO_ORIGEN) + "--" + str(IP_DESTINO) + "--" + str(PUERTO_DESTINO) + "--" + TIPO_PAQUETE + "--" + str(SN) + "--" +str(RN) + "--" +str(ACK) + "--" +str(FIN) + "\n")
         file.close()
         lock.release()

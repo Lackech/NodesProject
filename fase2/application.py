@@ -55,6 +55,8 @@ class Application:
 
         nodeIp,nodePort = self.getNodeInformation()
         self.node = NodeUdp(nodeIp,nodePort)
+        # Creo el log
+        self.createLog()
 
 
 
