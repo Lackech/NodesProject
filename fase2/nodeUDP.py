@@ -59,7 +59,6 @@ class NodeUdp:
             try:
                 # Aquí esperamos que al socket le lleguen todos los paquetes del mensaje y lo recibimos
                 message = connectionSocket.recv()
-                print(message)
 
                 # Agregar info a bitacora
             except:
