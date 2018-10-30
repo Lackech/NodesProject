@@ -390,7 +390,7 @@ class Socket:
 
                 # Escribo en la bitacora el paquete de fin de cliente de handshake
                 self.writeLog(self.myIp, self.myPort, self.destinationIp,
-                              self.destinationPort, "Envio de datos", self.SN, self.RN,
+                              self.destinationPort, "Datos enviados", self.SN, self.RN,
                               0, fin, self.lockSocket)
 
                 # Enviamos el paquete
@@ -442,8 +442,18 @@ class Socket:
                 message="f"
             )
 
+            # Escribo en la bitacora el paquete de fin de cliente de handshake
+            self.writeLog(self.myIp, self.myPort, self.destinationIp,
+                          self.destinationPort, "ACK enviado", self.SN, self.RN,
+                          1, 0, self.lockSocket)
+
             # Enviamos el paquete
             self.sendPacket(packet, (self.destinationIp, self.destinationPort))
+
+        # Escribo en la bitacora el paquete de fin de cliente de handshake
+        self.writeLog(self.myIp, self.myPort, self.destinationIp,
+            self.destinationPort, "Mensaje completo recibido: " + message, "", "",
+            "", "", self.lockSocket)
 
         return message
 
@@ -468,6 +478,11 @@ class Socket:
             fin=1,
             message="s"
         )
+
+        # Escribo en la bitacora el paquete de fin de cliente de handshake
+        self.writeLog(self.myIp, self.myPort, self.destinationIp,
+                      self.destinationPort, "Cierro conexion con IP: " + str(self.destinationIp) + " y Puerto: " + str(self.destinationPort) , self.SN, self.RN,
+                      1, 0, self.lockSocket)
 
         # Enviamos el paquete
         self.sendPacket(packet, (self.destinationIp, self.destinationPort))
