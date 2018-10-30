@@ -9,6 +9,8 @@ class NodeUdp:
         self.ip = ip
         self.port = port
 
+        # Candado para la bitacora
+        self.lock = threading.Lock()
         #Creamos el servidor que se va a encargar de recibir todos los mensajes, que vengan de otro nodo
         self.serverSocket = Socket()
 

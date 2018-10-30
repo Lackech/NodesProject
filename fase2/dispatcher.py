@@ -482,3 +482,11 @@ class Socket:
         ackSocket.sendto(packet, address)
         # Cerramos la conexión del socket UDP
         ackSocket.close()
+
+
+    def writeLog(self,IP_ORIGEN,PUERTO_ORIGEN,IP_DESTINO,PUERTO_DESTINO,TIPO_PAQUETE,SN, RN, ACK, FIN, lock):
+        lock.acquire()
+        file = open("log.txt","w")
+        file.write(IP_ORIGEN + "--" + PUERTO_ORIGEN + "--" + IP_DESTINO + "--" + PUERTO_DESTINO + "--" + TIPO_PAQUETE + "--" + SN + "--" +RN + "--" +ACK + "--" +FIN )
+        file.close()
+        lock.release()
