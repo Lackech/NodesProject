@@ -40,6 +40,9 @@ class Application:
 
         self.listOfConnectionMessage = "Please choose one of the following connections:\n"
 
+        self.sendingDataMessage = "Please write what you want to send to the other node:"
+        self.warningDataMessage = "At least write something -,-"
+
 
 
 
@@ -166,8 +169,11 @@ class Application:
 
 
     def optainSendingMessage(self):
-        string = "holamundo"
-        return string
+        message = self.interface.getInput(self.sendingDataMessage)
+        while len(message) <= 0:
+            self.interface.showMessage(self.warningDataMessage)
+            message = self.interface.getInput(self.sendingDataMessage)
+        return message
 
 
     def createLog(self):
