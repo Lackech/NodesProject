@@ -2,6 +2,8 @@ from fase2.bitnator import *
 from socket import *
 from threading import *
 import queue
+from random import *
+
 
 # Variables para identificar estado actual del socket
 LISTENING = 0
@@ -181,6 +183,8 @@ class Socket:
 
     # Analiza el paquete, revisando el RN y SN y tomando la accion adecuada.
     def debugPacket(self, packetMessage):
+
+
         if packetMessage[SYN] == 1 and packetMessage[ACK] == 1 and packetMessage[
             FIN] == 0 and self.connected == False:
             # Entramos en el caso donde el paquete recibido es un ACK al paquete que inicia el handshake
@@ -387,6 +391,14 @@ class Socket:
 
 
             while success == False:
+
+                if random() < 0.15:
+                    # Escribo en la bitacora el paquete qu se perdio de handshake
+                    self.writeLog(self.myIp, self.myPort, self.destinationIp,
+                                  self.destinationPort, "Se perdio el paquetillo", self.SN, self.RN,
+                                  0, fin, self.lockSocket)
+                    pass
+
 
                 # Escribo en la bitacora el paquete de fin de cliente de handshake
                 self.writeLog(self.myIp, self.myPort, self.destinationIp,
