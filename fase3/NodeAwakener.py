@@ -32,6 +32,7 @@ class NodeAwakener(Node):
                         for row in reader:
                             nodeAddress = (row[NODE_IP],row[NODE_PORT])
                             nodeMascara = row[NODE_MASCARA]
+                            self.awakeNode(nodeAddress,nodeMascara)
                 else:
                     success = False
             else:
@@ -40,10 +41,23 @@ class NodeAwakener(Node):
             # Quiere decir que en el proceso hubo algún error por lo que no se puedo leer correctamente el archivo
             success = False
 
+        return success
+
 
 
 
 
     # Se encarga de levantar un nodo, y verificar si se activó correctamente
     def awakeNode(self,nodeAddress,nodeMascara):
+        success = True
 
+        information = self.router.validIp(nodeAddress[0])
+        if information[0] == True:
+            if self.router.validPort(nodeAddress[1]) and self.router.validMascara(nodeMascara,information[1]):
+                # Creamos el nodo
+            else:
+                success = False
+        else:
+            success = False
+
+        return success

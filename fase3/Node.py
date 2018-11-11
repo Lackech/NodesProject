@@ -1,3 +1,5 @@
+from fase3.Router import *
+
 # La dirección predeterminada del activador de nodos
 NODE_AWAKENER_ADDRESS = ('localhost',12000)
 NODE_AWAKENER_MASCARA = 2
@@ -19,5 +21,9 @@ class Node:
 
     # Contructor con parámetros
     def __init__(self,address,mascara):
+        # Guardamos la información del nodo
         self.address = address
         self.mascara = mascara
+
+        # Creamos el validador de rutas
+        self.router = Router()
