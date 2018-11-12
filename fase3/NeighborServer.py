@@ -13,6 +13,10 @@ class NeighborServer:
         socketServer = socket(AF_INET, SOCK_DGRAM)
         socketServer.bind(("", port))
 
+        self.listener = threading.Thread(name='daemon', target=self.findNodeNeighbors())
+        self.listener.setDaemon(True)
+        self.listener.start()
+
 
 
     def uploadNeighborsTable(self,file):
@@ -34,7 +38,7 @@ class NeighborServer:
 
         return success
 
-    def findNodeNeighbors(self, ipNode, portNode, table):
+    def findNodeNeighbors(self):
         while True:
             packetMessage, clientAddress = self.serverSocket.recvfrom(2048)
 
