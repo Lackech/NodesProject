@@ -1,4 +1,5 @@
 from fase3.Router import *
+from fase3.Bitnator import *
 import threading
 from socket import *
 
@@ -20,18 +21,27 @@ NEIGHBOR_PORT = 'Neighbor_port'
 DISTANE = 'Distance'
 
 # Variables de flag del paquete
-SOURCE_IP = 1
-SOURCE_PORT = 2
-SERVER_REQUEST = 3
-SERVER_ACK = 4
-HELLO = 5
-HELLO_ACK = 6
-UPDATE = 7
-UPDATE_ACK = 8
-TYPE = 9
-MESSAGE = 10
+SOURCE_IP = 0
+SOURCE_PORT = 1
+SERVER_REQUEST = 2
+SERVER_ACK = 3
+HELLO = 4
+HELLO_ACK = 5
+UPDATE = 6
+UPDATE_ACK = 7
+TYPE = 8
+MESSAGE = 9
 
-
+# Diseño del paquete:
+    ########################################################################################################################
+    #           #               #       #       #       #       #       #        #        #           #       #           ##
+    # IP Origen # Puerto Origen #  P.S  #  R.S  #  S.A  #  ACK  #  Act  #  ACK   #  Tipo  #  Relleno  #  T.V  #   Datos   ##
+    #           #               #       #       #       #       #       #        #        #           #       #           ##
+    ########################################################################################################################
+    #           #               #       #       #       #       #       #        #        #           #       #           ##
+    # 4 Bytes   #   2 Bytes     #  bit  #  bit  #  bit  #  bit  #  bit  #  bit   #  bit   #    bit    # byte  # 512 bytes ##
+    #           #               #       #       #       #       #       #        #        #           #       #           ##
+    ########################################################################################################################
 
 
 class Node:
@@ -45,33 +55,9 @@ class Node:
         # Creamos el validador de rutas
         self.router = Router()
 
-
-    def encrypt(self):
-        encriptedMessage = bytearray()
-
-
-        # Retornamos el mensaje encriptado
-        return encriptedMessage
+        # Creamos el codificador y decodificador de mensajes
+        self.bitnator = Bitnator()
 
 
 
-    def encryptIp(self,ip):
-        encriptedIp = bytearray()
-
-        ipParts = ip.split('.')
-        for s in ipParts:
-            encriptedIp += int(s).to_bytes(1, 'big')
-
-        return encriptedIp
-
-
-    def decrypt(self, packet):
-
-
-        return (origenIp,origenPort,serverRequest,serverACK,hello,helloACK,update,updateACK,type,message)
-
-
-    def acomodateIp(self,num4,num3,num2,num1):
-        decriptedIp = num1 + '.' + num2 + '.' + num3 + '.' + num4
-        return decriptedIp
 

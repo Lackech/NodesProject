@@ -3,7 +3,7 @@ from socket import *
 from fase3.Node import *
 import csv
 
-class NeighborServer:
+class NeighborServer(Node):
 
     def __init__(self):
         # Llamamos al constructor del padre, para guardar el address del activador del nodo

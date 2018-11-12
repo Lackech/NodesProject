@@ -11,6 +11,13 @@ class NodeAwakener(Node):
         # Llamamos al constructor del padre, para guardar el address del activador del nodo
         Node.__init__(NODE_AWAKENER_ADDRESS,NODE_AWAKENER_MASCARA)
 
+        socketServer = socket(AF_INET, SOCK_DGRAM)
+        socketServer.bind(NODE_AWAKENER_ADDRESS)
+
+        self.listener = threading.Thread(name='daemon', target=self.findNodeNeighbors())
+        self.listener.setDaemon(True)
+        self.listener.start()
+
 
 
 
@@ -62,3 +69,15 @@ class NodeAwakener(Node):
             success = False
 
         return success
+
+
+
+
+
+    # Se encarga de esperar la respuesta de los nodos que despertó
+
+
+
+
+
+    # Se encarga de verificar sí el nodo se despertó correctamente
