@@ -2,7 +2,7 @@ from socket import *
 from fase3.Node import *
 import csv
 
-#
+
 
 class NodeAwakener(Node):
 

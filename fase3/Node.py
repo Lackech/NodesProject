@@ -19,6 +19,21 @@ NEIGHBOR_MASCARA = 'Neighbor_mascara'
 NEIGHBOR_PORT = 'Neighbor_port'
 DISTANE = 'Distance'
 
+# Variables de flag del paquete
+SOURCE_IP = 1
+SOURCE_PORT = 2
+SERVER_REQUEST = 3
+SERVER_ACK = 4
+HELLO = 5
+HELLO_ACK = 6
+UPDATE = 7
+UPDATE_ACK = 8
+TYPE = 9
+MESSAGE = 10
+
+
+
+
 class Node:
 
     # Contructor con parámetros
@@ -27,21 +42,36 @@ class Node:
         self.address = address
         self.mascara = mascara
 
-        # Tablas
-        self.reachabilityTable = {}
-        self.neighborTable = {}
-        # Candados
-        self.lockReach = threading.Lock()
-        self.lockLog = threading.Lock()
-        self.lockNeighbor = threading.Lock()
-
-        # Decimos que el nodo está vivo
-        self.alive = True
-
-        self.socket = socket(AF_INET, SOCK_DGRAM)
-        self.socket.bind(("", self.port))
-
-
-
         # Creamos el validador de rutas
         self.router = Router()
+
+
+    def encrypt(self):
+        encriptedMessage = bytearray()
+
+
+        # Retornamos el mensaje encriptado
+        return encriptedMessage
+
+
+
+    def encryptIp(self,ip):
+        encriptedIp = bytearray()
+
+        ipParts = ip.split('.')
+        for s in ipParts:
+            encriptedIp += int(s).to_bytes(1, 'big')
+
+        return encriptedIp
+
+
+    def decrypt(self, packet):
+
+
+        return (origenIp,origenPort,serverRequest,serverACK,hello,helloACK,update,updateACK,type,message)
+
+
+    def acomodateIp(self,num4,num3,num2,num1):
+        decriptedIp = num1 + '.' + num2 + '.' + num3 + '.' + num4
+        return decriptedIp
+
