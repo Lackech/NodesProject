@@ -55,6 +55,7 @@ class NodeAwakener(Node):
         if information[0] == True:
             if self.router.validPort(nodeAddress[1]) and self.router.validMascara(nodeMascara,information[1]):
                 # Creamos el nodo
+                pass
             else:
                 success = False
         else:
