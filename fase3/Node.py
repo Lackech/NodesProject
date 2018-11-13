@@ -11,6 +11,10 @@ NODE_AWAKENER_MASCARA = 2
 NEIGHBOR_SERVER_ADDRESS = ('localhost',2000)
 NEIGHBOR_SERVER_MASCARA = 2
 
+# Variables para accesar al ip y puerto en ls variables tipo address
+IP = 0
+PORT = 1
+
 # Lista con los nombres para localizar la información en el diccionario creado por el lector de archivos
 NODE_IP = 'Node_ip'
 NODE_MASCARA = 'Node_mascara'
@@ -57,6 +61,9 @@ class Node:
 
         # Creamos el codificador y decodificador de mensajes
         self.bitnator = Bitnator()
+
+        # Booleano que nos permite saber sí el nodo sigue vivo
+        self.alive = True
 
 
 

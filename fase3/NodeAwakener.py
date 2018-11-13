@@ -14,7 +14,7 @@ class NodeAwakener(Node):
         socketServer = socket(AF_INET, SOCK_DGRAM)
         socketServer.bind(NODE_AWAKENER_ADDRESS)
 
-        self.listener = threading.Thread(name='daemon', target=self.findNodeNeighbors())
+        self.listener = threading.Thread(name='daemon', target=self.listenForAnswers())
         self.listener.setDaemon(True)
         self.listener.start()
 
@@ -75,6 +75,10 @@ class NodeAwakener(Node):
 
 
     # Se encarga de esperar la respuesta de los nodos que despertó
+    def listenForAnswers(self):
+        while self.alive:
+            packetMessage, clientAddress = self.serverSocket.recvfrom(2048)
+
 
 
 
