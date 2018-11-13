@@ -1,5 +1,10 @@
-string = "asdfg"
-print(string[0])
-print(string[1])
+s = bytearray()
+for i in range(0,15):
+    s += i.to_bytes(1,'big')
+
+print(s)
+
+for i in range(0,15):
+    print(s.pop())
 
 

@@ -82,43 +82,30 @@ class Bitnator:
 
 
     def decrypt(self, encryptedMessage):
-        # Obtenmos el dato enviado ya en su forma desencriptada
-        message = chr(n)
+        # Obtenemos la dirección de quien está enviando el mensaje
+        origenIp = str(encryptedMessage[0]) + "." + str(encryptedMessage[1]) + "." + str(encryptedMessage[2]) + "." + str(encryptedMessage[3])
+        origenPort = encryptedMessage[4]*256 + encryptedMessage[5]
 
         # Obtenemos el conjunto de banderas que viene en un byte del mensaje
-        flags = m
+        flags = encryptedMessage[6]
         # Nos desasemos de los bits de relleno
         flags = int(flags / 2)
-        flags = int(flags / 2)
-        flags = int(flags / 2)
         # Ahora con el módulo empezamos a preguntar si el valor de cada bandera es 1 o 0
-        fin = int(flags % 2)
+        type = int(flags % 2)
         flags = int(flags / 2)
-        ack = int(flags % 2)
+        actAck = int(flags % 2)
         flags = int(flags / 2)
-        sn = int(flags % 2)
+        act = int(flags % 2)
         flags = int(flags / 2)
-        rn = int(flags % 2)
+        saAck = int(flags % 2)
         flags = int(flags / 2)
-        syn = int(flags % 2)
+        sa = int(flags % 2)
+        flags = int(flags / 2)
+        rs = int(flags % 2)
+        flags = int(flags / 2)
+        ps = int(flags % 2)
 
+        # Obtenemos el byte que contiene el número de vecinos
+        tv = encryptedMessage[7]
 
-        # Obtenemos la dirección de la dirección destino
-        destinationPort = l + k * 256
-        # Como a la hora de realizar por se optinene primero el número de más a la derecha, se creo un método que acomodaba el Ip de la forma correcta
-        destinationIp = str(g) + '.' + str(h) + '.' + str(i) + '.' + str(j)
-
-        # Obtenemos la dirección de la dirección origen
-        origenPort = f + e * 256
-        # Como a la hora de realizar por se optinene primero el número de más a la derecha, se creo un método que acomodaba el Ip de la forma correcta
-        origenIp = str(a) + '.' + str(b) + '.' + str(c) + '.' + str(d)
-
-        return (origenIp,origenPort,destinationIp,destinationPort,syn,rn,sn,ack,fin,message)
-
-
-
-
-
-    def acomodateIp(self,num4,num3,num2,num1):
-        decriptedIp = num1 + '.' + num2 + '.' + num3 + '.' + num4
-        return decriptedIp
+        # Falta la parte de desencriptar el mensaje o vecinos
