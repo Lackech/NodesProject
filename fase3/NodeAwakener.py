@@ -15,6 +15,19 @@ class NodeAwakener(Node):
         self.socketServer = socket(AF_INET, SOCK_DGRAM)
         self.socketServer.bind(NODE_AWAKENER_ADDRESS)
 
+        # Variabes que sirven para comunicarse con el usuario
+        self.greetingMessage = "Welcome to the Node Awakener!!\n\n"
+        self.optionMessage = ("Please select one of the following options:\n",
+                              "\t1. Wake nodes in a CSV file\n",
+                              "\t2. Wake an specific node\n",
+                              "\t3. Exit\n"
+                              "\t Your answer --> ")
+
+        self.invalidFileNameMessage = " -- is not a valid file name"
+        self.failedCreatingNodeMessage = "Sorry something went wrong creating the Node: "
+
+        self.fileNameMessage = "Please write the file name -->"
+
 
 
 
@@ -136,3 +149,30 @@ class NodeAwakener(Node):
         clientSocket.close()
 
         return success
+
+
+
+
+
+    # Menú que se encarga de realizar las diferentes acciones que el despachador puede hacer
+    def nodeAwakenerMenu(self):
+        print(self.greetingMessage)
+        while self.alive:
+            answer = input(self.optionMessage)
+
+            try:
+                intAnswer = int(answer)
+                if intAnswer == 1:
+                    fileName = input(self.fileNameMessage)
+                    if self.awakeNodesInFile(fileName) == False:
+                        print(self.warningMessage + fileName + self.invalidFileNameMessage)
+                elif intAnswer == 2:
+                    nodeAddress,nodeMascara = self.getNodeInformation()
+                    if self.awakeNode(nodeAddress,nodeMascara) == False:
+                        print(self.warningMessage + self.failedCreatingNodeMessage + nodeAddress[IP] + str(nodeAddress[PORT]))
+                elif intAnswer == 3:
+                    self.alive = False
+                else:
+                    print(self.warningMessage + answer + self.invalidOptionMessage)
+            except:
+                print(self.warningMessage + answer + self.invalidOptionMessage)

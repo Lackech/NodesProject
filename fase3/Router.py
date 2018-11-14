@@ -63,7 +63,7 @@ class Router:
 
 
 
-    def validMascara(self, mascara, tipoRed):
+    def validMascara(self, mascara, networkType):
         valid = True
         mascaraInt = 0
         try:
@@ -74,10 +74,10 @@ class Router:
         if valid:
             if mascara < 8 or mascara > 31:
                 valid = False
-            elif tipoRed == RED_B:
+            elif networkType == RED_B:
                 if mascara < 16:
                     valid = False
-            elif tipoRed == RED_C:
+            elif networkType == RED_C:
                 if mascara < 24:
                     valid = False
 

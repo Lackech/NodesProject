@@ -18,11 +18,25 @@ class NodeUDP(Node):
 
         # Creamos el socket servido del nodo
         self.socketServer = socket(AF_INET, SOCK_DGRAM)
-        self.socketServer.bind(self.ad)
+        self.socketServer.bind(self.address)
 
         self.listener = threading.Thread(name='daemon', target=self.listen)
         self.listener.setDaemon(True)
         self.listener.start()
+
+        # Variabes que sirven para comunicarse con el usuario
+        self.greetingMessage = "Welcome to the Node UDP...\n\n"
+        self.optionMessage = ("Please select one of the following options:\n",
+                              "\t1. Change a link's distance\n",
+                              "\t2. Kill myself\n",
+                              "\t3. Print reachability table\n",
+                              "\t4. Exit\n"
+                              "\t Your answer --> ")
+
+        self.neighborOptionMessage = "Please write the number of the Node to modify --> "
+        self.changeDistanceMessage = "Please write the new distance --> "
+
+        self.failedUpdate = "Sorry something went updating the Node distance"
 
 
 
@@ -111,3 +125,82 @@ class NodeUDP(Node):
     def kill(self):
         #Matamos el servidor
         self.alive = False
+
+
+
+
+
+    # Se encarga de actualizar una distancia en la lista de los vecinos
+    def updateDistance(self):
+        self.enlistNeighbours()
+        answer = input(self.neighborOptionMessage)
+
+        try:
+            intAnswer = int(answer)
+            if intAnswer > 0 and intAnswer <= len(self.neighborTable):
+                neighbourInformation = self.getNeighbour(intAnswer)
+
+                newDistance = input(self.changeDistanceMessage)
+                intNewDistance = int(newDistance)
+
+                if intNewDistance > 20 and intNewDistance <= 100:
+                    self.reachabilityTable[neighbourInformation] = intNewDistance
+                    self.neighborTable[neighbourInformation] = intNewDistance
+                else:
+                    print(self.warningMessage + answer + self.invalidOptionMessage)
+            else:
+                print(self.warningMessage + answer + self.invalidOptionMessage)
+        except:
+            print(self.warningMessage + answer + self.invalidOptionMessage)
+
+
+
+
+
+    # Se encarga de retornar la información con la que se identifica el nodo seleccionado
+    def getNeighbour(self,option):
+        i = 1
+        neighbourInformation = 0
+        for neighbour in self.neighborTable:
+            if i == option:
+                neighbourInformation = neighbour
+                break
+
+        return neighbourInformation
+
+
+
+
+
+    # Imprime una lista con los vecinos del nodo
+    def enlistNeighbours(self):
+        i = 1
+        for neighbour in self.neighborTable:
+            print(str(i) + ". (" + neighbour[0][IP] + " , " + str(neighbour[0][PORT]) + ") - " + str(neighbour[1]))
+            ++i
+
+
+
+
+
+    # Menú del nodo UDP
+    def nodeUDPMenu(self):
+        print(self.greetingMessage)
+        while self.alive:
+            answer = input(self.optionMessage)
+
+            try:
+                intAnswer = int(answer)
+                if intAnswer == 1:
+                    self.updateDistance()
+                elif intAnswer == 2:
+                    # Hay que avisarle a los vecinos
+                    self.alive = False
+                elif intAnswer == 3:
+                    self.enlistNeighbours()
+                elif intAnswer == 4:
+                    self.alive = False
+                else:
+                    print(self.warningMessage + answer + self.invalidOptionMessage)
+            except:
+                print(self.warningMessage + answer + self.invalidOptionMessage)
