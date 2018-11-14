@@ -5,7 +5,7 @@ class NodeUDP(Node):
 
     def __init__(self,address,mascara):
         # Llamamos al constructor del padre, para guardar el address del activador del nodo
-        Node.__init__(address, mascara) # Ver como manejamos las direcciones aca
+        Node.__init__(self,address, mascara) # Ver como manejamos las direcciones aca
 
         # Tablas
         self.reachabilityTable = {}
@@ -17,8 +17,8 @@ class NodeUDP(Node):
         self.lockNeighbor = threading.Lock()
 
         # Creamos el socket servido del nodo
-        self.socketServer = socket(AF_INET, SOCK_DGRAM)
-        self.socketServer.bind(self.address)
+        self.serverSocket = socket(AF_INET, SOCK_DGRAM)
+        self.serverSocket.bind(self.address)
 
         self.listener = threading.Thread(name='daemon', target=self.listen)
         self.listener.setDaemon(True)
@@ -26,10 +26,10 @@ class NodeUDP(Node):
 
         # Variabes que sirven para comunicarse con el usuario
         self.greetingMessage = "Welcome to the Node UDP...\n\n"
-        self.optionMessage = ("Please select one of the following options:\n",
-                              "\t1. Change a link's distance\n",
-                              "\t2. Kill myself\n",
-                              "\t3. Print reachability table\n",
+        self.optionMessage = ("Please select one of the following options:\n"
+                              "\t1. Change a link's distance\n"
+                              "\t2. Kill myself\n"
+                              "\t3. Print reachability table\n"
                               "\t4. Exit\n"
                               "\t Your answer --> ")
 
@@ -38,7 +38,7 @@ class NodeUDP(Node):
 
         self.failedUpdate = "Sorry something went updating the Node distance"
 
-
+        self.nodeUDPMenu()
 
 
 
