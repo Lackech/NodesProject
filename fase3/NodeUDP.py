@@ -26,10 +26,10 @@ class NodeUDP(Node):
 
         # Variabes que sirven para comunicarse con el usuario
         self.greetingMessage = "Welcome to the Node UDP...\n\n"
-        self.optionMessage = ("Please select one of the following options:\n",
-                              "\t1. Change a link's distance\n",
-                              "\t2. Kill myself\n",
-                              "\t3. Print reachability table\n",
+        self.optionMessage = ("Please select one of the following options:\n"
+                              "\t1. Change a link's distance\n"
+                              "\t2. Kill myself\n"
+                              "\t3. Print reachability table\n"
                               "\t4. Exit\n"
                               "\t Your answer --> ")
 
@@ -37,6 +37,8 @@ class NodeUDP(Node):
         self.changeDistanceMessage = "Please write the new distance --> "
 
         self.failedUpdate = "Sorry something went updating the Node distance"
+
+        self.nodeUDPMenu()
 
 
 

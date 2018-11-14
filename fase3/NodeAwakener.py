@@ -1,7 +1,11 @@
 from socket import *
+from os import *
 from fase3.Node import *
 from fase3.NodeUDP import *
+
+import sys
 import csv
+
 
 
 
@@ -10,7 +14,7 @@ class NodeAwakener(Node):
     # Constructor por omisión
     def __init__(self):
         # Llamamos al constructor del padre, para guardar el address del activador del nodo
-        Node.__init__(NODE_AWAKENER_ADDRESS,NODE_AWAKENER_MASCARA)
+        Node.__init__(self,NODE_AWAKENER_ADDRESS,NODE_AWAKENER_MASCARA)
 
         self.socketServer = socket(AF_INET, SOCK_DGRAM)
         self.socketServer.bind(NODE_AWAKENER_ADDRESS)
@@ -74,7 +78,7 @@ class NodeAwakener(Node):
             # Verificamos que tanto el puesto como la mascara sean validos
             if self.router.validPort(nodeAddress[1]) and self.router.validMascara(nodeMascara,information[1]):
                 # Creamos el nodo
-                NewNode = NodeUDP(nodeAddress,nodeMascara)
+                system("start python createNodeUDP.py " + nodeAddress[0] + " " + str(nodeAddress[1]) + " " + str(nodeMascara))
 
                 # Verificamos si el nodo se creó correctamente
                 success = self.verifyExistence(nodeAddress)

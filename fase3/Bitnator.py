@@ -76,6 +76,9 @@ class Bitnator:
     def encryptIp(self,ip):
         encryptedIp = bytearray()
 
+        if ip == "localhost":
+            ip = "127.0.0.1"
+
         ipParts = ip.split('.')
         for s in ipParts:
             encryptedIp += int(s).to_bytes(1, 'big')
