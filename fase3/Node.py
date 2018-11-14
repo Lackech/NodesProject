@@ -66,6 +66,59 @@ class Node:
         # Booleano que nos permite saber sí el nodo sigue vivo
         self.alive = True
 
+        # Variabes que sirven para comunicarse con el usuario
+        self.ipMessage = "\tWrite the Node's Ip: "
+        self.portMessage = "\tWrite Node's Port: "
+        self.mascaraMessage = "\tWrite Node's Mascara: "
+
+        self.warningMessage = "\tWARNING -- \""
+        self.invalidIpMessage = "\" -- is not a valid IP"
+        self.invalidPortMessage = "\" -- is not a valid Port"
+        self.invalidMascaraMessage = "\" -- is not a valid Mascara"
+        self.invalidOptionMessage = " -- is not a valid option"
 
 
 
+    def optainNodeIp(self):
+        nodeIp = input(self.ipMessage)
+        information = self.router.validIp(nodeIp)
+        while information[0] is False:
+            print(self.warningMessage + nodeIp + self.invalidIpMessage)
+            nodeIp = input(self.ipMessage)
+            information = self.router.validIp(nodeIp)
+
+        return nodeIp,information[1]
+
+
+
+
+
+    def optainNodePort(self):
+        nodePort = input(self.portMessage)
+        while self.router.validPort(nodePort) is False:
+            print(self.warningMessage + nodePort + self.invalidPortMessage)
+            nodePort = input(self.portMessage)
+
+        return int(nodePort)
+
+
+
+
+
+    def optainNodeMascara(self,networkType):
+        nodeMascara = input(self.mascaraMessage)
+        while self.router.validMascara(nodeMascara,networkType) is False:
+            print(self.warningMessage + nodeMascara + self.invalidMascaraMessage)
+            nodeMascara = input(self.mascaraMessage)
+
+        return int(nodeMascara)
+
+
+
+
+
+    def getNodeInformation(self):
+        nodeIp,networkType = self.optainNodeIp()
+        nodePort = self.optainNodePort()
+        nodeMascara = self.optainNodeMascara(networkType)
+        return (nodeIp,nodePort),nodeMascara
