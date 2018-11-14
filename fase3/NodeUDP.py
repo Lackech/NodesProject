@@ -16,9 +16,6 @@ class NodeUDP(Node):
         self.lockLog = threading.Lock()
         self.lockNeighbor = threading.Lock()
 
-        # Decimos que el nodo está vivo
-        self.alive = True
-
         # Creamos el socket servido del nodo
         self.socketServer = socket(AF_INET, SOCK_DGRAM)
         self.socketServer.bind(self.ad)
@@ -45,7 +42,6 @@ class NodeUDP(Node):
             thread.setDaemon(True)
             thread.start()
 
-
         self.serverSocket.close()
 
 
@@ -60,14 +56,21 @@ class NodeUDP(Node):
             pass
         elif decryptedMessage[HELLO] == 1:
             # Entramos en el caso donde el despachador esta verificando sí el nodo está despierto o no
+
             pass
         elif decryptedMessage[UPDATE] == 1:
             # Entramos en el caso donde el mensaje recibido es una actualización de la tabla de alcanzabilidad
             pass
         elif decryptedMessage[TYPE] == 1:
-            # Entrams en el caso donde lo recibido es un mensaje de datos
+            # Entramos en el caso donde lo recibido es un mensaje de datos
             pass
 
+
+
+
+
+    # Se encarga de dar una respuesta al mensaje de saludo que hizo el despachador u otro nodo
+    def answerHelloMessage(self,decryptedMessage):
 
 
 

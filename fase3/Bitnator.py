@@ -112,13 +112,15 @@ class Bitnator:
         # Obtenemos el byte que contiene el número de vecinos
         tv = encryptedMessage[7]
 
+        # Creamos un mensaje vació, que solo en caso de que venga información de vecinos o datos es que se llena
+        message = 0
+
         # Preguntamos que tipo de mensaje es, dependiendo de esto varía la forma de decodificar los datos
         if rs == 1 or act == 1:
             # Quiere decir que es un mensaje con una Tbla de alcanzabilidad o vecinos
             pass
         elif type == 1:
             # Quire decir que es un mensaje que contiene datos
-            message = ""
             for i in range(8,tv):
                 # Concatenamos cada letra al mensaje
                 message += str(encryptedMessage[i])
