@@ -5,7 +5,7 @@ class NodeUDP(Node):
 
     def __init__(self,address,mascara):
         # Llamamos al constructor del padre, para guardar el address del activador del nodo
-        Node.__init__(address, mascara) # Ver como manejamos las direcciones aca
+        Node.__init__(self,address, mascara) # Ver como manejamos las direcciones aca
 
         # Tablas
         self.reachabilityTable = {}
@@ -17,8 +17,8 @@ class NodeUDP(Node):
         self.lockNeighbor = threading.Lock()
 
         # Creamos el socket servido del nodo
-        self.socketServer = socket(AF_INET, SOCK_DGRAM)
-        self.socketServer.bind(self.address)
+        self.serverSocket = socket(AF_INET, SOCK_DGRAM)
+        self.serverSocket.bind(self.address)
 
         self.listener = threading.Thread(name='daemon', target=self.listen)
         self.listener.setDaemon(True)

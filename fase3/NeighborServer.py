@@ -7,14 +7,17 @@ class NeighborServer(Node):
 
     def __init__(self):
         # Llamamos al constructor del padre, para guardar el address del activador del nodo
-        #Node.__init__(NEIGHBOR_SERVER_ADDRESS, NEIGHBOR_SERVER_MASCARA)
+        Node.__init__(self,NEIGHBOR_SERVER_ADDRESS, NEIGHBOR_SERVER_MASCARA)
 
         self.allNeighbors = {}
 
+        self.socketServer = socket(AF_INET, SOCK_DGRAM)
+        self.socketServer.bind(("", 2000))
 
-        #self.listener = threading.Thread(name='daemon', target=self.findNodeNeighbors())
-        #self.listener.setDaemon(True)
-        #self.listener.start()
+
+        self.listener = threading.Thread(name='daemon', target=self.findNodeNeighbors)
+        self.listener.setDaemon(True)
+        self.listener.start()
 
 
 
@@ -26,7 +29,7 @@ class NeighborServer(Node):
             entrada = csv.DictReader(csvarchivo)
             for row in entrada:
 
-                nodeAddress = (row[NODE_IP], row[NODE_PORT], row[NODE_MASCARA])
+                nodeAddress = (row[NODE_IP], row[NODE_PORT])
                 nodeAddressValue = (row[NEIGHBOR_IP],row[NEIGHBOR_PORT],row[NEIGHBOR_MASCARA],row[DISTANE])
                 # Tengo que pasarlo a listas
                 listaValor = [nodeAddressValue]
@@ -44,10 +47,9 @@ class NeighborServer(Node):
         return success
 
     def findNodeNeighbors(self):
-        socketServer = socket(AF_INET, SOCK_DGRAM)
-        socketServer.bind(("", 2000))
+
         while True:
-            packetMessage, clientAddress = self.serverSocket.recvfrom(2048)
+            packetMessage, clientAddress = self.socketServer.recvfrom(2048)
             decryptPacket = self.bitnator.decrypt(packetMessage)
 
             #Analizamos el paquete recibido y le enviamos sus vecinos
@@ -69,7 +71,7 @@ class NeighborServer(Node):
                         act=0,
                         actAck=0,
                         type=0,
-                        tv=0,
+                        tv=len(listaVecinos),
                         data=listaVecinos
                     )
                     socketServer.sendto(encryptedMessage,(ipRequest,portRequest))

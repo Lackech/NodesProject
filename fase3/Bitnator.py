@@ -46,7 +46,18 @@ class Bitnator:
         if rs == 1 or act == 1:
             # Quiere decir que en los datos viene una lista de vecinos, por lo que tiene un proceso de
             # encriptación diferente
-            self.encryptNeighbours(tv,data)
+            neighborMessage = self.encryptNeighbours(tv,data)
+
+
+
+            # Encritamos el byte que dice la cantidad de datos enviados
+            encryptedMessage += tv.to_bytes(1, 'big')
+
+            # Conccatenamos los datos encriptados
+            encryptedMessage += neighborMessage
+
+
+
         else:
             # Quiere decir que los datos son de tipo mensaje normal
             encodedData = data.encode('utf-8')
@@ -65,9 +76,24 @@ class Bitnator:
 
     # Se encarga de encriptar la lista de vecinos
     def encryptNeighbours(self,tv,data):
-        # Aquí es donde se encripta la lista de vecinos
-        # creo que talvez no sea necesario hacer un metodo aparte
-        pass
+        try:
+
+            mensaje = bytearray(2 + tv * 10)
+            for entrada in data:
+                IP_split = entrada[0]
+                mensaje += int(IP_split[0])
+                mensaje += int(IP_split[1])
+                mensaje += int(IP_split[2])
+                mensaje += int(IP_split[3])
+
+                mensaje += entrada[1].to_bytes(2, byteorder='big')
+                mensaje += entrada[2].to_bytes(1, byteorder="big")
+
+        except:
+            pass
+
+
+        return mensaje
 
 
 
