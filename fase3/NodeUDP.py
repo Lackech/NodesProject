@@ -56,7 +56,7 @@ class NodeUDP(Node):
             pass
         elif decryptedMessage[HELLO] == 1:
             # Entramos en el caso donde el despachador esta verificando sí el nodo está despierto o no
-
+            self.send((decryptedMessage[SOURCE_IP],decryptedMessage[SOURCE_PORT]),0,0,0,1,0,0,0,0,"empty")
             pass
         elif decryptedMessage[UPDATE] == 1:
             # Entramos en el caso donde el mensaje recibido es una actualización de la tabla de alcanzabilidad
@@ -69,8 +69,39 @@ class NodeUDP(Node):
 
 
 
-    # Se encarga de dar una respuesta al mensaje de saludo que hizo el despachador u otro nodo
-    def answerHelloMessage(self,decryptedMessage):
+    # Se encarga de construir y enviar el mensaje al nodo que debe
+    def send(self, otherAddress, ps, rs, sa, saAck, act, actAck, type, tv, data):
+        success = False
+        # Crea la conexión con el servidor
+        clientSocket = socket(AF_INET, SOCK_DGRAM)
+
+        # Envía un mensaje codificado
+        encryptedMessage = self.bitnator.encrypt(
+            addressOrigen=self.address,
+            ps=ps,
+            rs=rs,
+            sa=sa,
+            saAck=saAck,
+            act=act,
+            actAck=actAck,
+            type=type,
+            tv=tv,
+            data=data
+        )
+
+        try:
+            # Tratamos de enviar el mensaje, con la respuesta
+            clientSocket.sendto(encryptedMessage, otherAddress)
+
+        except:
+            # No hacemo nada
+            pass
+
+        # Cerramos la conexión
+        clientSocket.close()
+
+        return success
+
 
 
 
