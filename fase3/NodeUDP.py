@@ -56,8 +56,9 @@ class NodeUDP(Node):
             pass
         elif decryptedMessage[HELLO] == 1:
             # Entramos en el caso donde el despachador esta verificando sí el nodo está despierto o no
-            self.send((decryptedMessage[SOURCE_IP],decryptedMessage[SOURCE_PORT]),0,0,0,1,0,0,0,0,"empty")
-            pass
+            if self.send((decryptedMessage[SOURCE_IP],decryptedMessage[SOURCE_PORT]),0,0,0,1,0,0,0,0,"empty") == False:
+                # Algo ocurrió en el proceso que no permitió enviar el mensaje correctamente
+                pass
         elif decryptedMessage[UPDATE] == 1:
             # Entramos en el caso donde el mensaje recibido es una actualización de la tabla de alcanzabilidad
             pass
