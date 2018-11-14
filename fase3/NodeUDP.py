@@ -71,7 +71,7 @@ class NodeUDP(Node):
 
     # Se encarga de dar una respuesta al mensaje de saludo que hizo el despachador u otro nodo
     def answerHelloMessage(self,decryptedMessage):
-
+        pass
 
 
 

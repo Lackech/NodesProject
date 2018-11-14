@@ -66,6 +66,7 @@ class Bitnator:
     # Se encarga de encriptar la lista de vecinos
     def encryptNeighbours(self,tv,data):
         # Aquí es donde se encripta la lista de vecinos
+        # creo que talvez no sea necesario hacer un metodo aparte
         pass
 
 
