@@ -25,7 +25,7 @@ class NeighborServer(Node):
 
 
 
-        self.nodeUDPMenu()
+        #self.nodeUDPMenu()
 
 
 
@@ -70,7 +70,6 @@ class NeighborServer(Node):
                 # Ocupo la mascara, preguntarle a Fake si lo saco de aqui o si modificamos todo el resto
                 dicAddress = (ipRequest,str(portRequest))
                 listaVecinos = self.allNeighbors.get(dicAddress)
-                print("LLegue aca")
                 if listaVecinos is not None:
                     # Armo el paquete para enviar
                     encryptedMessage = self.bitnator.encrypt(
@@ -86,9 +85,7 @@ class NeighborServer(Node):
                         tv=len(listaVecinos),
                         data=listaVecinos
                     )
-                    print("Antes de enviar")
                     self.socketServer.sendto(encryptedMessage,(ipRequest,portRequest))
-                    print("Despues de enviar")
 
 
 
