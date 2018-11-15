@@ -4,6 +4,7 @@ from fase3.Node import *
 import csv
 import threading
 
+
 class NeighborServer(Node):
 
     def __init__(self):

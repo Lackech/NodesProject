@@ -1,5 +1,6 @@
 from socket import *
 from fase3.Node import *
+import queue
 
 class NodeUDP(Node):
 
@@ -14,6 +15,8 @@ class NodeUDP(Node):
         self.listener = threading.Thread(name='daemon', target=self.listen)
         self.listener.setDaemon(True)
         self.listener.start()
+
+        self.waitingQueue = queue.Queue(1)
 
         # Tablas
         self.reachabilityTable = {}
@@ -84,6 +87,12 @@ class NodeUDP(Node):
                 self.reachabilityTable[row[0:3]] = (row[3],sourceIp, sourcePort, sourceMask)
 
             success = True
+
+            # Creamos el hilo que se va a encargar de enviar la tabla cada 30 segundos
+            thread = threading.Thread(name='Analizador', target=self.sendReacheabilityTable)
+            thread.setDaemon(True)
+            thread.start()
+
         elif sa == 1:
             # Entramos en el caso donde el despachador esta verificando sí el nodo está despierto o no
             if self.send((sourceIp,sourcePort),0,0,0,1,0,0,0,0,"empty") == False:
@@ -160,14 +169,30 @@ class NodeUDP(Node):
     # Se encarga de enviar la tabla de alcanzabilidad a los vecinos cada 30 segundos
     def sendReacheabilityTable(self):
         list = []
-        for neighbourAddress in self.neighborTable:
-            for reachableNode in self.reachabilityTable:
-                if reachableNode != neighbourAddress:
-                    list.append((reachableNode[0],reachableNode[1],reachableNode[2],self.reachabilityTable[reachableNode][0]))
-
-            if self.send(neighbourAddress,0,0,0,0,1,0,0,len(list),list) == False:
-                # Algo salió mal en el proceso
+        while self.alive:
+            # Esperamos 30 segundos para enviar la tabla de alcanzabilidad
+            try:
+                self.waitingQueue.get(timeout=30)
+            except:
+                # Continuamos con el método
                 pass
+
+            # Verificamos que el nodo siga vivo
+            if self.alive:
+                try:
+                    self.lockNeighbor.acquire()
+                    self.lockReach.acquire()
+                    for neighbourAddress in self.neighborTable:
+                        for reachableNode in self.reachabilityTable:
+                            if reachableNode != neighbourAddress:
+                                list.append((reachableNode[0],reachableNode[1],reachableNode[2],self.reachabilityTable[reachableNode][0]))
+
+                        if self.send(neighbourAddress,0,0,0,0,1,0,0,len(list),list) == False:
+                            # Algo salió mal en el proceso
+                            pass
+                finally:
+                    self.lockNeighbor.release()
+                    self.lockReach.release()
 
 
 
@@ -187,8 +212,15 @@ class NodeUDP(Node):
                 intNewDistance = int(newDistance)
 
                 if intNewDistance > 20 and intNewDistance <= 100:
-                    self.reachabilityTable[neighbourInformation] = intNewDistance
-                    self.neighborTable[neighbourInformation] = intNewDistance
+                    try:
+                        self.lockNeighbor.acquire()
+                        self.lockReach.acquire()
+
+                        self.reachabilityTable[neighbourInformation] = intNewDistance
+                        self.neighborTable[neighbourInformation] = intNewDistance
+                    finally:
+                        self.lockNeighbor.release()
+                        self.lockReach.release()
                 else:
                     print(self.warningMessage + answer + self.invalidOptionMessage)
             else:
@@ -204,10 +236,14 @@ class NodeUDP(Node):
     def getNeighbour(self,option):
         i = 1
         neighbourInformation = 0
-        for neighbour in self.neighborTable:
-            if i == option:
-                neighbourInformation = neighbour
-                break
+        try:
+            self.lockNeighbor.acquire()
+            for neighbour in self.neighborTable:
+                if i == option:
+                    neighbourInformation = neighbour
+                    break
+        finally:
+            self.lockNeighbor.release()
 
         return neighbourInformation
 
