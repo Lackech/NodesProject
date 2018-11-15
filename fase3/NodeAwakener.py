@@ -1,11 +1,10 @@
 from socket import *
-from os import *
+from os import system
 from fase3.Node import *
 from fase3.NodeUDP import *
 
-import sys
 import csv
-
+import queue
 
 
 
@@ -15,6 +14,8 @@ class NodeAwakener(Node):
     def __init__(self):
         # Llamamos al constructor del padre, para guardar el address del activador del nodo
         Node.__init__(self,NODE_AWAKENER_ADDRESS,NODE_AWAKENER_MASCARA)
+
+        self.answerQueue = queue.Queue(1)
 
         self.socketServer = socket(AF_INET, SOCK_DGRAM)
         self.socketServer.bind(NODE_AWAKENER_ADDRESS)
@@ -48,12 +49,12 @@ class NodeAwakener(Node):
             if fileNameLength > 4:
                 # Preguntamos si los 4 caracteres finales son los que nos indican que es un archivo tipo ".csv"
                 if fileName[fileNameLength-4] == '.' and fileName[fileNameLength-3] == 'c' and fileName[fileNameLength-2] == 's' and fileName[fileNameLength-1] == 'v':
-                    with open(fileName) as csvfile:
-                        reader = csv.DictReader(csvfile)
-                        for row in reader:
-                            nodeAddress = (row[NODE_IP],row[NODE_PORT])
-                            nodeMascara = row[NODE_MASCARA]
-                            self.awakeNode(nodeAddress,nodeMascara)
+                    csvfile = open(fileName)
+                    reader = csv.DictReader(csvfile)
+                    for row in reader:
+                        nodeAddress = (row[NODE_IP],int(row[NODE_PORT]))
+                        nodeMascara = int(row[NODE_MASCARA])
+                        success = self.awakeNode(nodeAddress,nodeMascara)
                 else:
                     success = False
             else:
@@ -98,7 +99,7 @@ class NodeAwakener(Node):
         success = False
         try:
             #Esperamos el paquete
-            packetMessage, clientAddress = self.serverSocket.recvfrom(2048)
+            packetMessage, clientAddress = self.socketServer.recvfrom(2048)
 
             # Desencriptamos el mensaje
             decryptedMessage = self.bitnator.decrypt(packetMessage)
@@ -139,12 +140,18 @@ class NodeAwakener(Node):
         )
 
         try:
+            # Esperamos a que el nodo se cree, para poder enviar el mensaje
+            try:
+                self.answerQueue.get(timeout=5)
+            except:
+                print("Hola")
+
             # Tratamos de enviar el mensaje
             clientSocket.sendto(encryptedMessage,otherAddress)
 
             # Esperamos una respuesta del nodo
             success = self.listenForAnswers(otherAddress)
-
+            print(50)
         except:
             # No hacemo nada
             pass
