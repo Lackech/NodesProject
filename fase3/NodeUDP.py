@@ -52,7 +52,6 @@ class NodeUDP(Node):
 
         try:
             self.send(NEIGHBOR_SERVER_ADDRESS, 1, 0, 0, 0, 0, 0, 0, 0, "")
-
             while self.alive:
                 # Recibimos el paquete
                 packetMessage, clientAddress = self.serverSocket.recvfrom(2048)
@@ -100,12 +99,14 @@ class NodeUDP(Node):
                 pass
         elif act == 1:
             self.lockReach.acquire()
+            print("Actualizacion")
             # Entramos en el caso donde el mensaje recibido es una actualización de la tabla de alcanzabilidad
             for row in data:
                 # Preguntamos sí el está o no en la tabla de alcanzabilidad
-                if self.reachabilityTable[row[0:3]] is None or self.reachabilityTable[row[0:2]][0] > row[3]:
+                if self.reachabilityTable[row[0:3]] is None or self.reachabilityTable[row[0:3]][0] > row[3]:
                     # Lo agregamos a los nodos que podemos alcanzar
                     self.reachabilityTable[row[0:3]] = (row[3],(sourceIp,sourcePort,sourceMask))
+                    print("Se actualizo:",row[0:3])
             self.lockReach.release()
 
             if self.send((sourceIp,sourcePort),0,0,0,0,0,1,0,0,"empty") == False:
@@ -180,6 +181,7 @@ class NodeUDP(Node):
             # Verificamos que el nodo siga vivo
             if self.alive:
                 try:
+                    print("Hora de actualizar tablas")
                     self.lockNeighbor.acquire()
                     self.lockReach.acquire()
                     for neighbourAddress in self.neighborTable:
@@ -187,12 +189,15 @@ class NodeUDP(Node):
                             if reachableNode != neighbourAddress:
                                 list.append((reachableNode[0],reachableNode[1],reachableNode[2],self.reachabilityTable[reachableNode][0]))
 
+                        print("Lista:",list,"\n Vecino",neighbourAddress,)
+
                         if self.send(neighbourAddress,0,0,0,0,1,0,0,len(list),list) == False:
                             # Algo salió mal en el proceso
                             pass
                 finally:
                     self.lockNeighbor.release()
                     self.lockReach.release()
+                    list = []
 
 
 
@@ -200,10 +205,13 @@ class NodeUDP(Node):
 
     # Se encarga de actualizar una distancia en la lista de los vecinos
     def updateDistance(self):
-        self.enlistNeighbours()
-        answer = input(self.neighborOptionMessage)
-
         try:
+            self.lockNeighbor.acquire()
+            self.lockReach.acquire()
+
+            self.enlistNeighbours()
+            answer = input(self.neighborOptionMessage)
+
             intAnswer = int(answer)
             if intAnswer > 0 and intAnswer <= len(self.neighborTable):
                 neighbourInformation = self.getNeighbour(intAnswer)
@@ -212,21 +220,17 @@ class NodeUDP(Node):
                 intNewDistance = int(newDistance)
 
                 if intNewDistance > 20 and intNewDistance <= 100:
-                    try:
-                        self.lockNeighbor.acquire()
-                        self.lockReach.acquire()
-
-                        self.reachabilityTable[neighbourInformation] = intNewDistance
-                        self.neighborTable[neighbourInformation] = intNewDistance
-                    finally:
-                        self.lockNeighbor.release()
-                        self.lockReach.release()
+                    self.reachabilityTable[neighbourInformation][0] = intNewDistance
+                    self.neighborTable[neighbourInformation][0] = intNewDistance
                 else:
                     print(self.warningMessage + answer + self.invalidOptionMessage)
             else:
                 print(self.warningMessage + answer + self.invalidOptionMessage)
         except:
             print(self.warningMessage + answer + self.invalidOptionMessage)
+        finally:
+            self.lockNeighbor.release()
+            self.lockReach.release()
 
 
 
@@ -236,14 +240,13 @@ class NodeUDP(Node):
     def getNeighbour(self,option):
         i = 1
         neighbourInformation = 0
-        try:
-            self.lockNeighbor.acquire()
-            for neighbour in self.neighborTable:
-                if i == option:
-                    neighbourInformation = neighbour
-                    break
-        finally:
-            self.lockNeighbor.release()
+
+        for neighbour in self.neighborTable:
+            if i == option:
+                neighbourInformation = neighbour
+                break
+            else:
+                i = i + 1
 
         return neighbourInformation
 
@@ -254,10 +257,12 @@ class NodeUDP(Node):
     # Imprime una lista con los vecinos del nodo
     def enlistNeighbours(self):
         i = 1
+
         for neighbour in self.neighborTable:
             print(str(i) + ". (" + neighbour[0] + " , " + str(neighbour[1]) + "," + str(neighbour[2]) + ") - " + str(
                 self.neighborTable[neighbour]))
-            ++i
+            i = i + 1
+
 
 
 
@@ -266,13 +271,17 @@ class NodeUDP(Node):
     # Se encarga de imprimir la taba de alcanzabilidad
     def enlitsReachabilityTable(self):
         i = 1
-        for reachableNode in self.reachabilityTable:
-            print(str(i) + ". (" + reachableNode[0] + " , " + str(reachableNode[1]) + "," + str(
-                reachableNode[2]) + ") - (" + str(
-                self.reachabilityTable[reachableNode][0]) + "," + self.reachabilityTable[reachableNode][1] + "," + str(
-                self.reachabilityTable[reachableNode][2]) + "," + str(self.reachabilityTable[reachableNode][3]) + ")")
-            ++i
+        try:
+            self.lockReach.release()
 
+            for reachableNode in self.reachabilityTable:
+                print(str(i) + ". (" + reachableNode[0] + " , " + str(reachableNode[1]) + "," + str(
+                    reachableNode[2]) + ") - (" + str(
+                    self.reachabilityTable[reachableNode][0]) + "," + self.reachabilityTable[reachableNode][1] + "," + str(
+                    self.reachabilityTable[reachableNode][2]) + "," + str(self.reachabilityTable[reachableNode][3]) + ")")
+                i = i + 1
+        finally:
+            self.lockReach.release()
 
 
 
