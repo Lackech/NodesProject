@@ -78,7 +78,9 @@ class NodeUDP(Node):
         # Ve cuales son las banderas que están activadas, y dependiendo de esto hace algo diferente
         if rs == 1:
             # Entramos en el caso de que el servidor le haya devuelto una respuesta con la información de los vecinos
-            pass
+            for row in data:
+                self.neighborTable[row[0:2]] = row[3]
+            success = True
         elif sa == 1:
             # Entramos en el caso donde el despachador esta verificando sí el nodo está despierto o no
             if self.send((sourceIp,sourcePort),0,0,0,1,0,0,0,0,"empty") == False:
