@@ -8,9 +8,6 @@ from fase3.NodeAwakener import *
 if __name__ == '__main__':
 
 
-    server = NeighborServer()
 
-
-
-
+    NodeUDP(('127.0.0.1',12000),24)
 

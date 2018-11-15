@@ -2,6 +2,7 @@ import sys
 from socket import *
 from fase3.Node import *
 import csv
+import threading
 
 class NeighborServer(Node):
 
@@ -10,14 +11,21 @@ class NeighborServer(Node):
         Node.__init__(self,NEIGHBOR_SERVER_ADDRESS, NEIGHBOR_SERVER_MASCARA)
 
         self.allNeighbors = {}
+        self.alive = True
 
         self.socketServer = socket(AF_INET, SOCK_DGRAM)
-        self.socketServer.bind(("", 2000))
+
+        self.uploadNeighborsTable("vecinos.csv")
 
 
-        self.listener = threading.Thread(name='daemon', target=self.findNodeNeighbors)
+        self.listener = threading.Thread(name='vecinillos', target=self.findNodeNeighbors)
         self.listener.setDaemon(True)
         self.listener.start()
+
+
+
+        self.nodeUDPMenu()
+
 
 
 
@@ -47,8 +55,9 @@ class NeighborServer(Node):
         return success
 
     def findNodeNeighbors(self):
+        self.socketServer.bind(("", 2000))
 
-        while True:
+        while self.alive:
             packetMessage, clientAddress = self.socketServer.recvfrom(2048)
             decryptPacket = self.bitnator.decrypt(packetMessage)
 
@@ -58,8 +67,9 @@ class NeighborServer(Node):
                 ipRequest = decryptPacket[SOURCE_IP]
                 portRequest = decryptPacket[SOURCE_PORT]
                 # Ocupo la mascara, preguntarle a Fake si lo saco de aqui o si modificamos todo el resto
-                dicAddress = (ipRequest,portRequest)
+                dicAddress = (ipRequest,str(portRequest))
                 listaVecinos = self.allNeighbors.get(dicAddress)
+                print("LLegue aca")
                 if listaVecinos is not None:
                     # Armo el paquete para enviar
                     encryptedMessage = self.bitnator.encrypt(
@@ -74,11 +84,26 @@ class NeighborServer(Node):
                         tv=len(listaVecinos),
                         data=listaVecinos
                     )
-                    socketServer.sendto(encryptedMessage,(ipRequest,portRequest))
+                    print("Antes de enviar")
+                    self.socketServer.sendto(encryptedMessage,(ipRequest,portRequest))
+                    print("Despues de enviar")
 
 
 
 
+    def nodeUDPMenu(self):
+        print("Running")
+        while self.alive:
+            answer = input("Enter any number to close the server!")
+
+            try:
+                intAnswer = int(answer)
+                if intAnswer != 9999:
+                    self.alive = False
+                else:
+                    print(self.warningMessage + answer + self.invalidOptionMessage)
+            except:
+                print(self.warningMessage + answer + self.invalidOptionMessage)
 
 
 

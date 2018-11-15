@@ -55,6 +55,11 @@ class Bitnator:
 
             # Conccatenamos los datos encriptados
             encryptedMessage += neighborMessage
+            freeSpace = 255 - (tv * 8)
+            hole = bytearray(freeSpace)
+            # Encritamos el byte que dice la cantidad de datos enviados
+            encryptedMessage += hole
+
 
 
 
@@ -78,16 +83,21 @@ class Bitnator:
     def encryptNeighbours(self,tv,data):
         try:
 
-            mensaje = bytearray(2 + tv * 10)
+            mensaje = bytearray()
             for entrada in data:
                 IP_split = entrada[0]
-                mensaje += int(IP_split[0])
-                mensaje += int(IP_split[1])
-                mensaje += int(IP_split[2])
-                mensaje += int(IP_split[3])
+                port_split = entrada[1]
+                mask_split = entrada[2]
+                cost_split = entrada[3]
+                IP_bit = self.encryptIp(IP_split)
+                port_bit = int(port_split).to_bytes(2,'big')
+                mask_bit = int(mask_split).to_bytes(1,'big')
+                cost_bit = int(cost_split).to_bytes(1,'big')
 
-                mensaje += entrada[1].to_bytes(2, byteorder='big')
-                mensaje += entrada[2].to_bytes(1, byteorder="big")
+                mensaje += IP_bit
+                mensaje += port_bit
+                mensaje += mask_bit
+                mensaje += cost_bit
 
         except:
             pass
@@ -97,6 +107,33 @@ class Bitnator:
 
 
 
+    def decryptNeighbors(self,tv,data):
+        try:
+            lista = []
+            j = 0
+            for i in range(0, tv):
+
+                # Optenemos el Ip
+                num1 = data[i * 8 + 0]
+                num2 = data[i * 8 + 1]
+                num3 = data[i * 8 + 2]
+                num4 = data[i * 8 + 3]
+
+                address = str(num1) + "." + str(num2) + "." + str(num3) + "." + str(num4)
+
+                port = data[i * 8 + 4] * 256 + data[i * 8 + 5]
+
+                mask = data[i * 8 + 6]
+
+                cost = data[i * 8 + 7]
+
+                lista.append((str(address),int(port),int(mask),int(cost)))
+
+
+        except:
+            pass
+
+        return lista
 
     # Encripta el ip que recibe por parámetro
     def encryptIp(self,ip):
@@ -148,7 +185,7 @@ class Bitnator:
         # Preguntamos que tipo de mensaje es, dependiendo de esto varía la forma de decodificar los datos
         if rs == 1 or act == 1:
             # Quiere decir que es un mensaje con una Tbla de alcanzabilidad o vecinos
-            pass
+            message = self.decryptNeighbors(tv,encryptedMessage[8:])
         elif type == 1:
             # Quire decir que es un mensaje que contiene datos
             for i in range(8,tv):

@@ -8,7 +8,7 @@ NODE_AWAKENER_ADDRESS = ('localhost',12000)
 NODE_AWAKENER_MASCARA = 2
 
 # La dirección predeterminada del nodo con la información de los vecinos
-NEIGHBOR_SERVER_ADDRESS = ('localhost',2000)
+NEIGHBOR_SERVER_ADDRESS = ('127.0.0.1',2000)
 NEIGHBOR_SERVER_MASCARA = 2
 
 # Variables para accesar al ip y puerto en ls variables tipo address

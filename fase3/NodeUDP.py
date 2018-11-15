@@ -46,19 +46,28 @@ class NodeUDP(Node):
 
     # Metodo que se encarga de recibir todos los mensajes que le llegan al nodo
     def listen(self):
-        while self.alive:
-            # Recibimos el paquete
-            packetMessage, clientAddress = self.serverSocket.recvfrom(2048)
 
-            # Desencrptamos el paquete
-            decrytedMessage = self.bitnator.decrypt(packetMessage)
+        try:
+            self.send(NEIGHBOR_SERVER_ADDRESS, 1, 0, 0, 0, 0, 0, 0, 0, "")
 
-            # Creamo un hilo que analiza el paquete
-            thread = threading.Thread(name='Analizador', target=self.analysMessage, args=decrytedMessage)
-            thread.setDaemon(True)
-            thread.start()
+            while self.alive:
+                # Recibimos el paquete
+                packetMessage, clientAddress = self.serverSocket.recvfrom(2048)
 
-        self.serverSocket.close()
+                # Desencrptamos el paquete
+                decrytedMessage = self.bitnator.decrypt(packetMessage)
+
+                # Creamo un hilo que analiza el paquete
+                thread = threading.Thread(name='Analizador', target=self.analysMessage, args=decrytedMessage)
+                thread.setDaemon(True)
+                thread.start()
+
+            self.serverSocket.close()
+
+
+        except:
+            pass
+
 
 
 
