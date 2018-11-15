@@ -7,6 +7,14 @@ class NodeUDP(Node):
         # Llamamos al constructor del padre, para guardar el address del activador del nodo
         Node.__init__(self,address, mascara) # Ver como manejamos las direcciones aca
 
+        # Creamos el socket servido del nodo
+        self.serverSocket = socket(AF_INET, SOCK_DGRAM)
+        self.serverSocket.bind(self.address)
+
+        self.listener = threading.Thread(name='daemon', target=self.listen)
+        self.listener.setDaemon(True)
+        self.listener.start()
+
         # Tablas
         self.reachabilityTable = {}
         self.neighborTable = {}
@@ -16,14 +24,6 @@ class NodeUDP(Node):
         self.lockLog = threading.Lock()
         self.lockNeighbor = threading.Lock()
 
-        # Creamos el socket servido del nodo
-        self.serverSocket = socket(AF_INET, SOCK_DGRAM)
-        self.serverSocket.bind(self.address)
-
-        self.listener = threading.Thread(name='daemon', target=self.listen)
-        self.listener.setDaemon(True)
-        self.listener.start()
-
         # Variabes que sirven para comunicarse con el usuario
         self.greetingMessage = "Welcome to the Node UDP...\n\n"
         self.optionMessage = ("Please select one of the following options:\n"
@@ -31,7 +31,7 @@ class NodeUDP(Node):
                               "\t2. Kill myself\n"
                               "\t3. Print reachability table\n"
                               "\t4. Exit\n"
-                              "\t Your answer --> ")
+                              "\tYour answer --> ")
 
         self.neighborOptionMessage = "Please write the number of the Node to modify --> "
         self.changeDistanceMessage = "Please write the new distance --> "
@@ -39,6 +39,8 @@ class NodeUDP(Node):
         self.failedUpdate = "Sorry something went updating the Node distance"
 
         self.nodeUDPMenu()
+
+
 
 
 
@@ -72,20 +74,20 @@ class NodeUDP(Node):
 
 
     # Se encarga de analizar el paquete y dependiendo de las banderas que vienen activadas varía lo que hace
-    def analysMessage(self,decryptedMessage):
+    def analysMessage(self,sourceIp,sourcePort,ps,rs,sa,saAck,act,actAck,type,tv,data):
         # Ve cuales son las banderas que están activadas, y dependiendo de esto hace algo diferente
-        if decryptedMessage[SERVER_ACK] == 1:
+        if rs == 1:
             # Entramos en el caso de que el servidor le haya devuelto una respuesta con la información de los vecinos
             pass
-        elif decryptedMessage[HELLO] == 1:
+        elif sa == 1:
             # Entramos en el caso donde el despachador esta verificando sí el nodo está despierto o no
-            if self.send((decryptedMessage[SOURCE_IP],decryptedMessage[SOURCE_PORT]),0,0,0,1,0,0,0,0,"empty") == False:
+            if self.send((sourceIp,sourcePort),0,0,0,1,0,0,0,0,"empty") == False:
                 # Algo ocurrió en el proceso que no permitió enviar el mensaje correctamente
                 pass
-        elif decryptedMessage[UPDATE] == 1:
+        elif act == 1:
             # Entramos en el caso donde el mensaje recibido es una actualización de la tabla de alcanzabilidad
             pass
-        elif decryptedMessage[TYPE] == 1:
+        elif type == 1:
             # Entramos en el caso donde lo recibido es un mensaje de datos
             pass
 

@@ -1,3 +1,5 @@
+from os import *
+import sys
 '''
 s = bytearray()
 for i in range(0,15):
@@ -10,10 +12,15 @@ for i in range(0,15):
     print(s.pop())
 '''
 
-r = {}
-r[1] = "1"
-r[2] = "2"
-r[3] = "3"
-r[4] = "4"
-r["asdf"] = "asdf"
-print(len(r))
+
+
+
+if __name__ == '__main__':
+    if len(sys.argv) == 1:
+        print("First time")
+        system("start python ejp.py 1 2 3")
+    else:
+        print(sys.argv)
+        while True:
+            pass
+
