@@ -128,6 +128,7 @@ class NodeAwakener(Node):
         #Envía un mensaje codificado
         encryptedMessage = self.bitnator.encrypt(
             addressOrigen = self.address,
+            maskOrigen=self.mascara,
             ps = 0,
             rs = 0,
             sa = 1,

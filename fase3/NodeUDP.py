@@ -1,5 +1,6 @@
 from socket import *
 from fase3.Node import *
+import queue
 
 class NodeUDP(Node):
 
@@ -14,6 +15,8 @@ class NodeUDP(Node):
         self.listener = threading.Thread(name='daemon', target=self.listen)
         self.listener.setDaemon(True)
         self.listener.start()
+
+        self.waitingQueue = queue.Queue(1)
 
         # Tablas
         self.reachabilityTable = {}
@@ -74,21 +77,40 @@ class NodeUDP(Node):
 
 
     # Se encarga de analizar el paquete y dependiendo de las banderas que vienen activadas varía lo que hace
-    def analysMessage(self,sourceIp,sourcePort,ps,rs,sa,saAck,act,actAck,type,tv,data):
+    def analysMessage(self,sourceIp,sourcePort,sourceMask,ps,rs,sa,saAck,act,actAck,type,tv,data):
         # Ve cuales son las banderas que están activadas, y dependiendo de esto hace algo diferente
         if rs == 1:
             # Entramos en el caso de que el servidor le haya devuelto una respuesta con la información de los vecinos
             for row in data:
-                self.neighborTable[row[0:2]] = row[3]
+                self.neighborTable[row[0:3]] = row[3]
+                # Agregamos los vecinos también a la tabla de alcanzabilidad
+                self.reachabilityTable[row[0:3]] = (row[3],sourceIp, sourcePort, sourceMask)
+
             success = True
+
+            # Creamos el hilo que se va a encargar de enviar la tabla cada 30 segundos
+            thread = threading.Thread(name='Analizador', target=self.sendReacheabilityTable)
+            thread.setDaemon(True)
+            thread.start()
+
         elif sa == 1:
             # Entramos en el caso donde el despachador esta verificando sí el nodo está despierto o no
             if self.send((sourceIp,sourcePort),0,0,0,1,0,0,0,0,"empty") == False:
                 # Algo ocurrió en el proceso que no permitió enviar el mensaje correctamente
                 pass
         elif act == 1:
+            self.lockReach.acquire()
             # Entramos en el caso donde el mensaje recibido es una actualización de la tabla de alcanzabilidad
-            pass
+            for row in data:
+                # Preguntamos sí el está o no en la tabla de alcanzabilidad
+                if self.reachabilityTable[row[0:3]] is None or self.reachabilityTable[row[0:2]][0] > row[3]:
+                    # Lo agregamos a los nodos que podemos alcanzar
+                    self.reachabilityTable[row[0:3]] = (row[3],(sourceIp,sourcePort,sourceMask))
+            self.lockReach.release()
+
+            if self.send((sourceIp,sourcePort),0,0,0,0,0,1,0,0,"empty") == False:
+                # Algo ocurrió en el proceso que no permitió enviar el mensaje correctamente
+                pass
         elif type == 1:
             # Entramos en el caso donde lo recibido es un mensaje de datos
             pass
@@ -106,6 +128,7 @@ class NodeUDP(Node):
         # Envía un mensaje codificado
         encryptedMessage = self.bitnator.encrypt(
             addressOrigen=self.address,
+            maskOrigen=self.mascara,
             ps=ps,
             rs=rs,
             sa=sa,
@@ -143,6 +166,38 @@ class NodeUDP(Node):
 
 
 
+    # Se encarga de enviar la tabla de alcanzabilidad a los vecinos cada 30 segundos
+    def sendReacheabilityTable(self):
+        list = []
+        while self.alive:
+            # Esperamos 30 segundos para enviar la tabla de alcanzabilidad
+            try:
+                self.waitingQueue.get(timeout=30)
+            except:
+                # Continuamos con el método
+                pass
+
+            # Verificamos que el nodo siga vivo
+            if self.alive:
+                try:
+                    self.lockNeighbor.acquire()
+                    self.lockReach.acquire()
+                    for neighbourAddress in self.neighborTable:
+                        for reachableNode in self.reachabilityTable:
+                            if reachableNode != neighbourAddress:
+                                list.append((reachableNode[0],reachableNode[1],reachableNode[2],self.reachabilityTable[reachableNode][0]))
+
+                        if self.send(neighbourAddress,0,0,0,0,1,0,0,len(list),list) == False:
+                            # Algo salió mal en el proceso
+                            pass
+                finally:
+                    self.lockNeighbor.release()
+                    self.lockReach.release()
+
+
+
+
+
     # Se encarga de actualizar una distancia en la lista de los vecinos
     def updateDistance(self):
         self.enlistNeighbours()
@@ -157,8 +212,15 @@ class NodeUDP(Node):
                 intNewDistance = int(newDistance)
 
                 if intNewDistance > 20 and intNewDistance <= 100:
-                    self.reachabilityTable[neighbourInformation] = intNewDistance
-                    self.neighborTable[neighbourInformation] = intNewDistance
+                    try:
+                        self.lockNeighbor.acquire()
+                        self.lockReach.acquire()
+
+                        self.reachabilityTable[neighbourInformation] = intNewDistance
+                        self.neighborTable[neighbourInformation] = intNewDistance
+                    finally:
+                        self.lockNeighbor.release()
+                        self.lockReach.release()
                 else:
                     print(self.warningMessage + answer + self.invalidOptionMessage)
             else:
@@ -174,10 +236,14 @@ class NodeUDP(Node):
     def getNeighbour(self,option):
         i = 1
         neighbourInformation = 0
-        for neighbour in self.neighborTable:
-            if i == option:
-                neighbourInformation = neighbour
-                break
+        try:
+            self.lockNeighbor.acquire()
+            for neighbour in self.neighborTable:
+                if i == option:
+                    neighbourInformation = neighbour
+                    break
+        finally:
+            self.lockNeighbor.release()
 
         return neighbourInformation
 
@@ -189,7 +255,22 @@ class NodeUDP(Node):
     def enlistNeighbours(self):
         i = 1
         for neighbour in self.neighborTable:
-            print(str(i) + ". (" + neighbour[0][IP] + " , " + str(neighbour[0][PORT]) + ") - " + str(neighbour[1]))
+            print(str(i) + ". (" + neighbour[0] + " , " + str(neighbour[1]) + "," + str(neighbour[2]) + ") - " + str(
+                self.neighborTable[neighbour]))
+            ++i
+
+
+
+
+
+    # Se encarga de imprimir la taba de alcanzabilidad
+    def enlitsReachabilityTable(self):
+        i = 1
+        for reachableNode in self.reachabilityTable:
+            print(str(i) + ". (" + reachableNode[0] + " , " + str(reachableNode[1]) + "," + str(
+                reachableNode[2]) + ") - (" + str(
+                self.reachabilityTable[reachableNode][0]) + "," + self.reachabilityTable[reachableNode][1] + "," + str(
+                self.reachabilityTable[reachableNode][2]) + "," + str(self.reachabilityTable[reachableNode][3]) + ")")
             ++i
 
 
@@ -210,7 +291,7 @@ class NodeUDP(Node):
                     # Hay que avisarle a los vecinos
                     self.alive = False
                 elif intAnswer == 3:
-                    self.enlistNeighbours()
+                    self.enlitsReachabilityTable()
                 elif intAnswer == 4:
                     self.alive = False
                 else:
