@@ -29,12 +29,13 @@ class Bitnator:
         data :param, los datos, pueden se un mensaje o la lista con los vecinos
     '''
 
-    def encrypt(self,addressOrigen,ps,rs,sa,saAck,act,actAck,type,tv,data):
+    def encrypt(self,addressOrigen,maskOrigen,ps,rs,sa,saAck,act,actAck,type,tv,data):
         encryptedMessage = bytearray()
 
         # Encriptamos la dirección de quien está enviando el mensaje
         encryptedMessage += self.encryptIp(addressOrigen[IP])
         encryptedMessage += addressOrigen[PORT].to_bytes(2,'big')
+        encryptedMessage += maskOrigen.to_bytes(1,'big')
 
         # Encriptamos el byte de banderas
         represetntativeValue = ps*128 + rs*64 + sa*32 + saAck*16 + act*8 + actAck*4 + type*2
@@ -156,9 +157,10 @@ class Bitnator:
         # Obtenemos la dirección de quien está enviando el mensaje
         sourceIp = str(encryptedMessage[0]) + "." + str(encryptedMessage[1]) + "." + str(encryptedMessage[2]) + "." + str(encryptedMessage[3])
         sourcePort = encryptedMessage[4]*256 + encryptedMessage[5]
+        sourceMask = encryptedMessage[6]
 
         # Obtenemos el conjunto de banderas que viene en un byte del mensaje
-        flags = encryptedMessage[6]
+        flags = encryptedMessage[7]
         # Nos desasemos de los bits de relleno
         flags = int(flags / 2)
         # Ahora con el módulo empezamos a preguntar si el valor de cada bandera es 1 o 0
@@ -177,7 +179,7 @@ class Bitnator:
         ps = int(flags % 2)
 
         # Obtenemos el byte que contiene el número de vecinos
-        tv = encryptedMessage[7]
+        tv = encryptedMessage[8]
 
         # Creamos un mensaje vació, que solo en caso de que venga información de vecinos o datos es que se llena
         message = 0
@@ -185,11 +187,11 @@ class Bitnator:
         # Preguntamos que tipo de mensaje es, dependiendo de esto varía la forma de decodificar los datos
         if rs == 1 or act == 1:
             # Quiere decir que es un mensaje con una Tbla de alcanzabilidad o vecinos
-            message = self.decryptNeighbors(tv,encryptedMessage[8:])
+            message = self.decryptNeighbors(tv,encryptedMessage[9:])
         elif type == 1:
             # Quire decir que es un mensaje que contiene datos
-            for i in range(8,tv):
+            for i in range(9,tv):
                 # Concatenamos cada letra al mensaje
                 message += str(encryptedMessage[i])
 
-        return (sourceIp,sourcePort,ps,rs,sa,saAck,act,actAck,type,tv,message)
+        return (sourceIp,sourcePort,sourceMask,ps,rs,sa,saAck,act,actAck,type,tv,message)

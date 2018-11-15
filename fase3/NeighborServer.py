@@ -74,6 +74,7 @@ class NeighborServer(Node):
                     # Armo el paquete para enviar
                     encryptedMessage = self.bitnator.encrypt(
                         addressOrigen=NEIGHBOR_SERVER_ADDRESS,
+                        maskOrigen=NEIGHBOR_MASCARA,
                         ps=0,
                         rs=1,
                         sa=0,

@@ -74,12 +74,15 @@ class NodeUDP(Node):
 
 
     # Se encarga de analizar el paquete y dependiendo de las banderas que vienen activadas varía lo que hace
-    def analysMessage(self,sourceIp,sourcePort,ps,rs,sa,saAck,act,actAck,type,tv,data):
+    def analysMessage(self,sourceIp,sourcePort,sourceMask,ps,rs,sa,saAck,act,actAck,type,tv,data):
         # Ve cuales son las banderas que están activadas, y dependiendo de esto hace algo diferente
         if rs == 1:
             # Entramos en el caso de que el servidor le haya devuelto una respuesta con la información de los vecinos
             for row in data:
                 self.neighborTable[row[0:2]] = row[3]
+                # Agregamos los vecinos también a la tabla de alcanzabilidad
+                self.reachabilityTable[row[0:2]] = (row[3], (sourceIp, sourcePort, sourceMask))
+
             success = True
         elif sa == 1:
             # Entramos en el caso donde el despachador esta verificando sí el nodo está despierto o no
@@ -87,8 +90,18 @@ class NodeUDP(Node):
                 # Algo ocurrió en el proceso que no permitió enviar el mensaje correctamente
                 pass
         elif act == 1:
+            self.lockReach.acquire()
             # Entramos en el caso donde el mensaje recibido es una actualización de la tabla de alcanzabilidad
-            pass
+            for row in data:
+                # Preguntamos sí el está o no en la tabla de alcanzabilidad
+                if self.reachabilityTable[row[0:2]] is None or self.reachabilityTable[row[0:2]][0] > row[3]:
+                    # Lo agregamos a los nodos que podemos alcanzar
+                    self.reachabilityTable[row[0:2]] = (row[3],(sourceIp,sourcePort,sourceMask))
+            self.lockReach.release()
+
+            if self.send((sourceIp,sourcePort),0,0,0,0,0,1,0,0,"empty") == False:
+                # Algo ocurrió en el proceso que no permitió enviar el mensaje correctamente
+                pass
         elif type == 1:
             # Entramos en el caso donde lo recibido es un mensaje de datos
             pass
@@ -106,6 +119,7 @@ class NodeUDP(Node):
         # Envía un mensaje codificado
         encryptedMessage = self.bitnator.encrypt(
             addressOrigen=self.address,
+            maskOrigen=self.mascara,
             ps=ps,
             rs=rs,
             sa=sa,
@@ -138,6 +152,15 @@ class NodeUDP(Node):
     def kill(self):
         #Matamos el servidor
         self.alive = False
+
+
+
+
+
+    # Se encarga de enviar la tabla de alcanzabilidad a los vecinos cada 30 segundos
+    def sendReacheabilityTable(self):
+        for neighbourAddress in self.neighborTable:
+            self.send(neighbourAddress,)
 
 
 
