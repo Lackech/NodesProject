@@ -79,9 +79,9 @@ class NodeUDP(Node):
         if rs == 1:
             # Entramos en el caso de que el servidor le haya devuelto una respuesta con la información de los vecinos
             for row in data:
-                self.neighborTable[row[0:2]] = row[3]
+                self.neighborTable[row[0:3]] = row[3]
                 # Agregamos los vecinos también a la tabla de alcanzabilidad
-                self.reachabilityTable[row[0:2]] = (row[3], (sourceIp, sourcePort, sourceMask))
+                self.reachabilityTable[row[0:3]] = (row[3], (sourceIp, sourcePort, sourceMask))
 
             success = True
         elif sa == 1:
@@ -94,9 +94,9 @@ class NodeUDP(Node):
             # Entramos en el caso donde el mensaje recibido es una actualización de la tabla de alcanzabilidad
             for row in data:
                 # Preguntamos sí el está o no en la tabla de alcanzabilidad
-                if self.reachabilityTable[row[0:2]] is None or self.reachabilityTable[row[0:2]][0] > row[3]:
+                if self.reachabilityTable[row[0:3]] is None or self.reachabilityTable[row[0:2]][0] > row[3]:
                     # Lo agregamos a los nodos que podemos alcanzar
-                    self.reachabilityTable[row[0:2]] = (row[3],(sourceIp,sourcePort,sourceMask))
+                    self.reachabilityTable[row[0:3]] = (row[3],(sourceIp,sourcePort,sourceMask))
             self.lockReach.release()
 
             if self.send((sourceIp,sourcePort),0,0,0,0,0,1,0,0,"empty") == False:
@@ -159,8 +159,15 @@ class NodeUDP(Node):
 
     # Se encarga de enviar la tabla de alcanzabilidad a los vecinos cada 30 segundos
     def sendReacheabilityTable(self):
+        list = []
         for neighbourAddress in self.neighborTable:
-            self.send(neighbourAddress,)
+            for reachableNode in self.reachabilityTable:
+                if reachableNode != neighbourAddress:
+                    list.append((reachableNode[0],reachableNode[1],reachableNode[2],self.reachabilityTable[reachableNode][0]))
+
+            if self.send(neighbourAddress,0,0,0,0,1,0,0,len(list),list) == False:
+                # Algo salió mal en el proceso
+                pass
 
 
 
@@ -212,7 +219,8 @@ class NodeUDP(Node):
     def enlistNeighbours(self):
         i = 1
         for neighbour in self.neighborTable:
-            print(str(i) + ". (" + neighbour[0][IP] + " , " + str(neighbour[0][PORT]) + ") - " + str(neighbour[1]))
+            print(str(i) + ". (" + neighbour[0] + " , " + str(neighbour[1]) + "," + str(neighbour[2]) + ") - " + str(
+                self.neighborTable[neighbour]))
             ++i
 
 
