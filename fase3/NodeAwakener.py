@@ -144,14 +144,13 @@ class NodeAwakener(Node):
             try:
                 self.answerQueue.get(timeout=5)
             except:
-                print("Hola")
+                pass
 
             # Tratamos de enviar el mensaje
             clientSocket.sendto(encryptedMessage,otherAddress)
 
             # Esperamos una respuesta del nodo
             success = self.listenForAnswers(otherAddress)
-            print(50)
         except:
             # No hacemo nada
             pass

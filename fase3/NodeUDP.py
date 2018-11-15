@@ -74,7 +74,6 @@ class NodeUDP(Node):
             # Entramos en el caso donde el despachador esta verificando sí el nodo está despierto o no
             if self.send((sourceIp,sourcePort),0,0,0,1,0,0,0,0,"empty") == False:
                 # Algo ocurrió en el proceso que no permitió enviar el mensaje correctamente
-                print(1)
                 pass
         elif act == 1:
             # Entramos en el caso donde el mensaje recibido es una actualización de la tabla de alcanzabilidad
