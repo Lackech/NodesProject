@@ -81,7 +81,7 @@ class NodeUDP(Node):
             for row in data:
                 self.neighborTable[row[0:3]] = row[3]
                 # Agregamos los vecinos también a la tabla de alcanzabilidad
-                self.reachabilityTable[row[0:3]] = (row[3], (sourceIp, sourcePort, sourceMask))
+                self.reachabilityTable[row[0:3]] = (row[3],sourceIp, sourcePort, sourceMask)
 
             success = True
         elif sa == 1:
@@ -227,6 +227,20 @@ class NodeUDP(Node):
 
 
 
+    # Se encarga de imprimir la taba de alcanzabilidad
+    def enlitsReachabilityTable(self):
+        i = 1
+        for reachableNode in self.reachabilityTable:
+            print(str(i) + ". (" + reachableNode[0] + " , " + str(reachableNode[1]) + "," + str(
+                reachableNode[2]) + ") - (" + str(
+                self.reachabilityTable[reachableNode][0]) + "," + self.reachabilityTable[reachableNode][1] + "," + str(
+                self.reachabilityTable[reachableNode][2]) + "," + str(self.reachabilityTable[reachableNode][3]) + ")")
+            ++i
+
+
+
+
+
     # Menú del nodo UDP
     def nodeUDPMenu(self):
         print(self.greetingMessage)
@@ -241,7 +255,7 @@ class NodeUDP(Node):
                     # Hay que avisarle a los vecinos
                     self.alive = False
                 elif intAnswer == 3:
-                    self.enlistNeighbours()
+                    self.enlitsReachabilityTable()
                 elif intAnswer == 4:
                     self.alive = False
                 else:
