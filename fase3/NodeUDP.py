@@ -98,16 +98,25 @@ class NodeUDP(Node):
                 # Algo ocurrió en el proceso que no permitió enviar el mensaje correctamente
                 pass
         elif act == 1:
-            self.lockReach.acquire()
-            print("Actualizacion")
-            # Entramos en el caso donde el mensaje recibido es una actualización de la tabla de alcanzabilidad
-            for row in data:
-                # Preguntamos sí el está o no en la tabla de alcanzabilidad
-                if self.reachabilityTable[row[0:3]] is None or self.reachabilityTable[row[0:3]][0] > row[3]:
-                    # Lo agregamos a los nodos que podemos alcanzar
-                    self.reachabilityTable[row[0:3]] = (row[3],(sourceIp,sourcePort,sourceMask))
-                    print("Se actualizo:",row[0:3])
-            self.lockReach.release()
+            try:
+                self.lockReach.acquire()
+                self.lockNeighbor.acquire()
+                # Entramos en el caso donde el mensaje recibido es una actualización de la tabla de alcanzabilidad
+                for row in data:
+                    # Preguntamos sí el está o no en la tabla de alcanzabilidad
+                    if row[0] == self.address[IP] and row[1] == self.address[PORT] and row[2] == self.mascara:
+                        print(1)
+                        self.reachabilityTable[row[0:3]] = (row[3], sourceIp, sourcePort, sourceMask)
+                        self.neighborTable[row[0:3]] = row[3]
+
+                    elif (self.reachabilityTable.get(row[0:3]) is None or self.reachabilityTable[row[0:3]][0] > row[3]):
+                        self.reachabilityTable[row[0:3]] = (row[3] + self.neighborTable[(sourceIp, sourcePort, sourceMask)],sourceIp,sourcePort,sourceMask)
+
+
+
+            finally:
+                self.lockNeighbor.release()
+                self.lockReach.release()
 
             if self.send((sourceIp,sourcePort),0,0,0,0,0,1,0,0,"empty") == False:
                 # Algo ocurrió en el proceso que no permitió enviar el mensaje correctamente
@@ -147,6 +156,7 @@ class NodeUDP(Node):
 
         except:
             # No hacemo nada
+
             pass
 
         # Cerramos la conexión
@@ -173,7 +183,7 @@ class NodeUDP(Node):
         while self.alive:
             # Esperamos 30 segundos para enviar la tabla de alcanzabilidad
             try:
-                self.waitingQueue.get(timeout=30)
+                self.waitingQueue.get(timeout=5)
             except:
                 # Continuamos con el método
                 pass
@@ -181,17 +191,13 @@ class NodeUDP(Node):
             # Verificamos que el nodo siga vivo
             if self.alive:
                 try:
-                    print("Hora de actualizar tablas")
                     self.lockNeighbor.acquire()
                     self.lockReach.acquire()
                     for neighbourAddress in self.neighborTable:
                         for reachableNode in self.reachabilityTable:
-                            if reachableNode != neighbourAddress:
-                                list.append((reachableNode[0],reachableNode[1],reachableNode[2],self.reachabilityTable[reachableNode][0]))
+                            list.append((reachableNode[0],reachableNode[1],reachableNode[2],self.reachabilityTable[reachableNode][0]))
 
-                        print("Lista:",list,"\n Vecino",neighbourAddress,)
-
-                        if self.send(neighbourAddress,0,0,0,0,1,0,0,len(list),list) == False:
+                        if self.send((neighbourAddress[0],neighbourAddress[1]),0,0,0,0,1,0,0,len(list),list) == False:
                             # Algo salió mal en el proceso
                             pass
                 finally:
@@ -220,8 +226,12 @@ class NodeUDP(Node):
                 intNewDistance = int(newDistance)
 
                 if intNewDistance > 20 and intNewDistance <= 100:
-                    self.reachabilityTable[neighbourInformation][0] = intNewDistance
-                    self.neighborTable[neighbourInformation][0] = intNewDistance
+                    self.reachabilityTable[neighbourInformation] = ( intNewDistance,
+                        self.reachabilityTable[neighbourInformation][1],
+                        self.reachabilityTable[neighbourInformation][2],
+                        self.reachabilityTable[neighbourInformation][3])
+
+                    self.neighborTable[neighbourInformation] = intNewDistance
                 else:
                     print(self.warningMessage + answer + self.invalidOptionMessage)
             else:
@@ -259,7 +269,7 @@ class NodeUDP(Node):
         i = 1
 
         for neighbour in self.neighborTable:
-            print(str(i) + ". (" + neighbour[0] + " , " + str(neighbour[1]) + "," + str(neighbour[2]) + ") - " + str(
+            print(str(i) + ". (" + neighbour[0] + " , " + str(neighbour[1]) + " , " + str(neighbour[2]) + ") - " + str(
                 self.neighborTable[neighbour]))
             i = i + 1
 
@@ -272,7 +282,7 @@ class NodeUDP(Node):
     def enlitsReachabilityTable(self):
         i = 1
         try:
-            self.lockReach.release()
+            self.lockReach.acquire()
 
             for reachableNode in self.reachabilityTable:
                 print(str(i) + ". (" + reachableNode[0] + " , " + str(reachableNode[1]) + "," + str(
@@ -280,6 +290,8 @@ class NodeUDP(Node):
                     self.reachabilityTable[reachableNode][0]) + "," + self.reachabilityTable[reachableNode][1] + "," + str(
                     self.reachabilityTable[reachableNode][2]) + "," + str(self.reachabilityTable[reachableNode][3]) + ")")
                 i = i + 1
+        except:
+            print(2)
         finally:
             self.lockReach.release()
 
@@ -304,6 +316,8 @@ class NodeUDP(Node):
                 elif intAnswer == 4:
                     self.alive = False
                 else:
+                    print(1)
                     print(self.warningMessage + answer + self.invalidOptionMessage)
             except:
+                print(0)
                 print(self.warningMessage + answer + self.invalidOptionMessage)

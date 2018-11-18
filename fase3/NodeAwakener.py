@@ -143,7 +143,7 @@ class NodeAwakener(Node):
         try:
             # Esperamos a que el nodo se cree, para poder enviar el mensaje
             try:
-                self.answerQueue.get(timeout=5)
+                self.answerQueue.get(timeout=2)
             except:
                 pass
 
