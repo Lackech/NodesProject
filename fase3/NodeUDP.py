@@ -82,8 +82,6 @@ class NodeUDP(Node):
             # Entramos en el caso de que el servidor le haya devuelto una respuesta con la información de los vecinos
             for row in data:
                 self.neighborTable[row[0:3]] = row[3]
-                # Agregamos los vecinos también a la tabla de alcanzabilidad
-                self.reachabilityTable[row[0:3]] = (row[3],sourceIp, sourcePort, sourceMask)
 
             success = True
 
@@ -104,16 +102,11 @@ class NodeUDP(Node):
                 # Entramos en el caso donde el mensaje recibido es una actualización de la tabla de alcanzabilidad
                 for row in data:
                     # Preguntamos sí el está o no en la tabla de alcanzabilidad
-                    if row[0] == self.address[IP] and row[1] == self.address[PORT] and row[2] == self.mascara:
-                        print(1)
-                        self.reachabilityTable[row[0:3]] = (row[3], sourceIp, sourcePort, sourceMask)
-                        self.neighborTable[row[0:3]] = row[3]
+                    if row[0] == self.address[IP] and row[1] == self.address[PORT] and row[2] == self.mascara and self.neighborTable.get((sourceIp,sourcePort,sourceMask)) is not None:
+                        self.neighborTable[(sourceIp,sourcePort,sourceMask)] = row[3]
 
-                    elif (self.reachabilityTable.get(row[0:3]) is None or self.reachabilityTable[row[0:3]][0] > row[3]):
+                    elif (self.neighborTable.get(row[0:3]) is None and (self.reachabilityTable.get(row[0:3]) is None or self.reachabilityTable[row[0:3]][0] > row[3])):
                         self.reachabilityTable[row[0:3]] = (row[3] + self.neighborTable[(sourceIp, sourcePort, sourceMask)],sourceIp,sourcePort,sourceMask)
-
-
-
             finally:
                 self.lockNeighbor.release()
                 self.lockReach.release()
@@ -183,7 +176,7 @@ class NodeUDP(Node):
         while self.alive:
             # Esperamos 30 segundos para enviar la tabla de alcanzabilidad
             try:
-                self.waitingQueue.get(timeout=5)
+                self.waitingQueue.get(timeout=15)
             except:
                 # Continuamos con el método
                 pass
@@ -194,6 +187,12 @@ class NodeUDP(Node):
                     self.lockNeighbor.acquire()
                     self.lockReach.acquire()
                     for neighbourAddress in self.neighborTable:
+                        # El primer loop mete dentro de la lista los vecinos cercanos del nodo
+                        for neighbourToSend in self.neighborTable:
+                            list.append((neighbourToSend[0], neighbourToSend[1], neighbourToSend[2],
+                                self.neighborTable[neighbourToSend]))
+
+                        # Este loop se encarga de meter lo que hay en la tabla de alcanzabilidad
                         for reachableNode in self.reachabilityTable:
                             list.append((reachableNode[0],reachableNode[1],reachableNode[2],self.reachabilityTable[reachableNode][0]))
 
@@ -283,6 +282,10 @@ class NodeUDP(Node):
         i = 1
         try:
             self.lockReach.acquire()
+            for reachableNode in self.neighborTable:
+                print(str(i) + ". (" + reachableNode[0] + " , " + str(reachableNode[1]) + "," + str(
+                    reachableNode[2]) + ") - (" + str(self.neighborTable[reachableNode]) + ")")
+                i = i + 1
 
             for reachableNode in self.reachabilityTable:
                 print(str(i) + ". (" + reachableNode[0] + " , " + str(reachableNode[1]) + "," + str(
@@ -290,8 +293,6 @@ class NodeUDP(Node):
                     self.reachabilityTable[reachableNode][0]) + "," + self.reachabilityTable[reachableNode][1] + "," + str(
                     self.reachabilityTable[reachableNode][2]) + "," + str(self.reachabilityTable[reachableNode][3]) + ")")
                 i = i + 1
-        except:
-            print(2)
         finally:
             self.lockReach.release()
 
@@ -316,8 +317,6 @@ class NodeUDP(Node):
                 elif intAnswer == 4:
                     self.alive = False
                 else:
-                    print(1)
                     print(self.warningMessage + answer + self.invalidOptionMessage)
             except:
-                print(0)
                 print(self.warningMessage + answer + self.invalidOptionMessage)
