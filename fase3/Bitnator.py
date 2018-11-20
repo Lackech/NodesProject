@@ -24,7 +24,7 @@ class Bitnator:
         data :param, la información que contiene el paquete
     '''
 
-    def encrypt(self,addressOrigen,addressDestiny,type,n, data):
+    def encrypt(self,addressOrigen,addressDestiny,type,data):
         encryptedMessage = bytearray()
 
         # Encriptamos la dirección de quien está enviando el paquete
@@ -40,22 +40,16 @@ class Bitnator:
         # Encriptamos los datos que vienen en el mensaje, primero tenemos que ver que información se va a enviar
         # puede ser un mensaje normal, o la lista de vecinos, para eso verificamos si la bandera rs o act están
         # encendidas
-        if type == 1 or type == 4:
-            # Quiere decir que en los datos viene una lista de vecinos, por lo que tiene un proceso de
-            # encriptación diferente
-            neighborMessage = self.encryptNeighbours(n,data)
-
+        if type == 1 or type == 4 or type == 5:
             # Encritamos el byte que dice la cantidad de datos enviados
-            encryptedMessage += n.to_bytes(2, 'big')
-
-            # Conccatenamos los datos encriptados
-            encryptedMessage += neighborMessage
-        elif type == 5:
-            # Quiere decir que los datos son de tipo mensaje normal o no tiene datos
-            encodedData = data.encode('utf-8')
-
-            # Encriptamos y guardamos el tamaño del mensaje
-            encryptedMessage += len(encodedData).to_bytes(2,'big')
+            if type == 1 or type == 4:
+                # Quiere decir que en los datos viene una lista de vecinos, por lo que tiene un proceso de
+                # encriptación diferente
+                encryptedMessage += int(len(data)/4).to_bytes(2, 'big')
+                encodedData = self.encryptNeighbours(data)
+            else:
+                encodedData = data.encode('utf-8')
+                encryptedMessage += len(encodedData).to_bytes(2, 'big')
 
             # Conccatenamos los datos encriptados
             encryptedMessage += encodedData
@@ -93,11 +87,11 @@ class Bitnator:
 
 
 
-    def decryptNeighbors(self,tv,data):
+    def decryptNeighbors(self,n,data):
         try:
             lista = []
             j = 0
-            for i in range(0, tv):
+            for i in range(0, n):
 
                 # Optenemos el Ip
                 num1 = data[i * 8 + 0]
@@ -154,14 +148,14 @@ class Bitnator:
         # Preguntamos que tipo de mensaje es, dependiendo de esto varía la forma de decodificar los datos
         if type == 1 or type == 4 or type == 5:
             # Obtenemos el byte que contiene el número de vecinos
-            n = encryptedMessage[13]
+            n = encryptedMessage[13]*256 + encryptedMessage[14]
 
             if type == 1 or type == 4:
                 # Quiere decir que es un mensaje con una Tbla de alcanzabilidad o vecinos
-                message = self.decryptNeighbors(encryptedMessage[14:])
+                message = self.decryptNeighbors(n,encryptedMessage[15:])
             else:
                 message = ""
-                for i in range(14, n):
+                for i in range(15, n):
                     # Concatenamos cada letra al mensaje
                     message += str(encryptedMessage[i])
 

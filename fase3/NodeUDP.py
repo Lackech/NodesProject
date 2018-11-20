@@ -16,6 +16,11 @@ class NodeUDP(Node):
         self.listener.setDaemon(True)
         self.listener.start()
 
+        # Creamos el hilo que se va a encargar de enviar la tabla cada 30 segundos
+        thread = threading.Thread(name='Analizador', target=self.sendReacheabilityTable)
+        thread.setDaemon(True)
+        thread.start()
+
         self.waitingQueue = queue.Queue(1)
 
         # Tablas
@@ -51,7 +56,7 @@ class NodeUDP(Node):
     def listen(self):
 
         try:
-            self.send(NEIGHBOR_SERVER_ADDRESS, 1, 0, 0, 0, 0, 0, 0, 0, "")
+            self.send(NEIGHBOR_SERVER_ADDRESS,1,"empty")
             while self.alive:
                 # Recibimos el paquete
                 packetMessage, clientAddress = self.serverSocket.recvfrom(2048)
@@ -76,26 +81,19 @@ class NodeUDP(Node):
 
 
     # Se encarga de analizar el paquete y dependiendo de las banderas que vienen activadas varía lo que hace
-    def analysMessage(self,sourceIp,sourcePort,sourceMask,ps,rs,sa,saAck,act,actAck,type,tv,data):
+    def analysMessage(self,sourceIp,sourcePort,destinyIp,destinyPort,type,n,data):
         # Ve cuales son las banderas que están activadas, y dependiendo de esto hace algo diferente
-        if rs == 1:
+        if type == 1:
             # Entramos en el caso de que el servidor le haya devuelto una respuesta con la información de los vecinos
             for row in data:
                 self.neighborTable[row[0:3]] = row[3]
 
-            success = True
-
-            # Creamos el hilo que se va a encargar de enviar la tabla cada 30 segundos
-            thread = threading.Thread(name='Analizador', target=self.sendReacheabilityTable)
-            thread.setDaemon(True)
-            thread.start()
-
-        elif sa == 1:
+        elif type == 2:
             # Entramos en el caso donde el despachador esta verificando sí el nodo está despierto o no
-            if self.send((sourceIp,sourcePort),0,0,0,1,0,0,0,0,"empty") == False:
+            if self.send((sourceIp,sourcePort),3,"empty") == False:
                 # Algo ocurrió en el proceso que no permitió enviar el mensaje correctamente
                 pass
-        elif act == 1:
+        elif type == 1:
             try:
                 self.lockReach.acquire()
                 self.lockNeighbor.acquire()
@@ -123,7 +121,7 @@ class NodeUDP(Node):
 
 
     # Se encarga de construir y enviar el mensaje al nodo que debe
-    def send(self, otherAddress, ):
+    def send(self, otherAddress,type,data):
         success = False
         # Crea la conexión con el servidor
         clientSocket = socket(AF_INET, SOCK_DGRAM)
@@ -133,8 +131,7 @@ class NodeUDP(Node):
             addressOrigen=self.address,
             addressDestiny=otherAddress,
             type=type,
-            n=0,
-            data="empty"
+            data=data
         )
 
         try:
@@ -190,7 +187,7 @@ class NodeUDP(Node):
                         for reachableNode in self.reachabilityTable:
                             list.append((reachableNode[0],reachableNode[1],reachableNode[2],self.reachabilityTable[reachableNode][0]))
 
-                        if self.send((neighbourAddress[0],neighbourAddress[1]),0,0,0,0,1,0,0,len(list),list) == False:
+                        if self.send((neighbourAddress[0],neighbourAddress[1]),1,list) == False:
                             # Algo salió mal en el proceso
                             pass
                 finally:
