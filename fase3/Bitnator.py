@@ -1,14 +1,14 @@
 
 # Diseño del paquete:
-    ######################################################################################
-    #           #               #            #                #      #         #         #
-    # IP Origen # Puerto Origen # IP Destino # Puerto Destino # Tipo #    N    #  Datos  #
-    #           #               #            #                #      #         #         #
-    ######################################################################################
-    #           #               #            #                #      #         #         #
-    # 4 Bytes   #   2 Bytes     #  4 Bytes   #    2 Bytes     # Byte # 2 Bytes # N Bytes #
-    #           #               #            #                #      #         #         #
-    ######################################################################################
+    ########################################################################################################################
+    #           #               #       #       #       #       #       #        #        #           #       #           ##
+    # IP Origen # Puerto Origen #  P.S  #  R.S  #  S.A  #  ACK  #  Act  #  ACK   #  Tipo  #  Relleno  #  T.V  #   Datos   ##
+    #           #               #       #       #       #       #       #        #        #           #       #           ##
+    ########################################################################################################################
+    #           #               #       #       #       #       #       #        #        #           #       #           ##
+    # 4 Bytes   #   2 Bytes     #  bit  #  bit  #  bit  #  bit  #  bit  #  bit   #  bit   #    bit    # byte  # 512 bytes ##
+    #           #               #       #       #       #       #       #        #        #           #       #           ##
+    ########################################################################################################################
 
 # Variables para accesar al ip y puerto en ls variables tipo address
 IP = 0
@@ -18,44 +18,59 @@ class Bitnator:
 
     '''
         addressOrigen :param, contien tanto el ip como el puerto de la dircción origen
-        addressDestino :param, contiene tanto el ip como el puesto de la dirección destino
-        type :param, indica que tipo de paquete se está enviando
-        N :param, sí el mensaje es de datos indica la cantidad que se está enviando, sí es de alcanzabilidad dice la cantidad de filas
-        data :param, la información que contiene el paquete
+        ps :param, bandera - petición al servidor
+        rs :param, bandera - respuesta del servidor
+        sa :param, bandera - saludo Awekener
+        saAck :param, bandera - ack Awekener
+        act :param, bandera - actualización
+        actAck :param, badera - ack actualización
+        type :param, bandera - dice sí es de tipo mensaje normal, o sí es una actualización
+        tv :param, tamaño de vecinos, número de vecinos que vienen en la sección de datos
+        data :param, los datos, pueden se un mensaje o la lista con los vecinos
     '''
 
-    def encrypt(self,addressOrigen,addressDestiny,type,n, data):
+    def encrypt(self,addressOrigen,maskOrigen,ps,rs,sa,saAck,act,actAck,type,tv,data):
         encryptedMessage = bytearray()
 
-        # Encriptamos la dirección de quien está enviando el paquete
+        # Encriptamos la dirección de quien está enviando el mensaje
         encryptedMessage += self.encryptIp(addressOrigen[IP])
         encryptedMessage += addressOrigen[PORT].to_bytes(2,'big')
-        # Encriptamos la dirección de a queién se le está enviando el paquete
-        encryptedMessage += self.encryptIp(addressDestiny[IP])
-        encryptedMessage += addressDestiny[PORT].to_bytes(2, 'big')
+        encryptedMessage += maskOrigen.to_bytes(1,'big')
 
         # Encriptamos el byte de banderas
-        encryptedMessage += type.to_bytes(1,'big')
+        represetntativeValue = ps*128 + rs*64 + sa*32 + saAck*16 + act*8 + actAck*4 + type*2
+        encryptedMessage += represetntativeValue.to_bytes(1,'big')
 
         # Encriptamos los datos que vienen en el mensaje, primero tenemos que ver que información se va a enviar
         # puede ser un mensaje normal, o la lista de vecinos, para eso verificamos si la bandera rs o act están
         # encendidas
-        if type == 1 or type == 4:
+        if rs == 1 or act == 1:
             # Quiere decir que en los datos viene una lista de vecinos, por lo que tiene un proceso de
             # encriptación diferente
-            neighborMessage = self.encryptNeighbours(n,data)
+            neighborMessage = self.encryptNeighbours(tv,data)
+
+
 
             # Encritamos el byte que dice la cantidad de datos enviados
-            encryptedMessage += n.to_bytes(2, 'big')
+            encryptedMessage += tv.to_bytes(1, 'big')
 
             # Conccatenamos los datos encriptados
             encryptedMessage += neighborMessage
-        elif type == 5:
-            # Quiere decir que los datos son de tipo mensaje normal o no tiene datos
-            encodedData = data.encode('utf-8')
+            freeSpace = 255 - (tv * 8)
+            hole = bytearray(freeSpace)
+            # Encritamos el byte que dice la cantidad de datos enviados
+            encryptedMessage += hole
 
-            # Encriptamos y guardamos el tamaño del mensaje
-            encryptedMessage += len(encodedData).to_bytes(2,'big')
+
+
+
+        else:
+            # Quiere decir que los datos son de tipo mensaje normal
+            encodedData = data.encode('utf-8')
+            freeSpace = 255 - len(encodedData)
+
+            # Encritamos el byte que dice la cantidad de datos enviados
+            encryptedMessage += freeSpace.to_bytes(1, 'big')
 
             # Conccatenamos los datos encriptados
             encryptedMessage += encodedData
@@ -66,7 +81,7 @@ class Bitnator:
 
 
     # Se encarga de encriptar la lista de vecinos
-    def encryptNeighbours(self,data):
+    def encryptNeighbours(self,tv,data):
         try:
 
             mensaje = bytearray()
@@ -78,7 +93,7 @@ class Bitnator:
                 IP_bit = self.encryptIp(IP_split)
                 port_bit = int(port_split).to_bytes(2,'big')
                 mask_bit = int(mask_split).to_bytes(1,'big')
-                cost_bit = int(cost_split).to_bytes(3,'big')
+                cost_bit = int(cost_split).to_bytes(1,'big')
 
                 mensaje += IP_bit
                 mensaje += port_bit
@@ -111,7 +126,7 @@ class Bitnator:
 
                 mask = data[i * 8 + 6]
 
-                cost = data[i * 8 + 7] * 65536 + data[i * 8 + 8] * 256 + data[i * 8 + 9]
+                cost = data[i * 8 + 7]
 
                 lista.append((str(address),int(port),int(mask),int(cost)))
 
@@ -139,35 +154,44 @@ class Bitnator:
 
 
     def decrypt(self, encryptedMessage):
-        information = 0
-
         # Obtenemos la dirección de quien está enviando el mensaje
         sourceIp = str(encryptedMessage[0]) + "." + str(encryptedMessage[1]) + "." + str(encryptedMessage[2]) + "." + str(encryptedMessage[3])
         sourcePort = encryptedMessage[4]*256 + encryptedMessage[5]
-        # Obtenemo l dirección de a quién se le está enviando el mensaje
-        destinyIp = str(encryptedMessage[6]) + "." + str(encryptedMessage[7]) + "." + str(encryptedMessage[8]) + "." + str(encryptedMessage[9])
-        destinyPort = encryptedMessage[10]*256 + encryptedMessage[11]
+        sourceMask = encryptedMessage[6]
 
-        # Obtenemos el tipo de mensaje que se recibió
-        type = encryptedMessage[12]
+        # Obtenemos el conjunto de banderas que viene en un byte del mensaje
+        flags = encryptedMessage[7]
+        # Nos desasemos de los bits de relleno
+        flags = int(flags / 2)
+        # Ahora con el módulo empezamos a preguntar si el valor de cada bandera es 1 o 0
+        type = int(flags % 2)
+        flags = int(flags / 2)
+        actAck = int(flags % 2)
+        flags = int(flags / 2)
+        act = int(flags % 2)
+        flags = int(flags / 2)
+        saAck = int(flags % 2)
+        flags = int(flags / 2)
+        sa = int(flags % 2)
+        flags = int(flags / 2)
+        rs = int(flags % 2)
+        flags = int(flags / 2)
+        ps = int(flags % 2)
+
+        # Obtenemos el byte que contiene el número de vecinos
+        tv = encryptedMessage[8]
+
+        # Creamos un mensaje vació, que solo en caso de que venga información de vecinos o datos es que se llena
+        message = 0
 
         # Preguntamos que tipo de mensaje es, dependiendo de esto varía la forma de decodificar los datos
-        if type == 1 or type == 4 or type == 5:
-            # Obtenemos el byte que contiene el número de vecinos
-            n = encryptedMessage[13]
+        if rs == 1 or act == 1:
+            # Quiere decir que es un mensaje con una Tbla de alcanzabilidad o vecinos
+            message = self.decryptNeighbors(tv,encryptedMessage[9:])
+        elif type == 1:
+            # Quire decir que es un mensaje que contiene datos
+            for i in range(9,tv):
+                # Concatenamos cada letra al mensaje
+                message += str(encryptedMessage[i])
 
-            if type == 1 or type == 4:
-                # Quiere decir que es un mensaje con una Tbla de alcanzabilidad o vecinos
-                message = self.decryptNeighbors(encryptedMessage[14:])
-            else:
-                message = ""
-                for i in range(14, n):
-                    # Concatenamos cada letra al mensaje
-                    message += str(encryptedMessage[i])
-
-            information = (sourceIp, sourcePort, destinyIp, destinyPort, type, n, message)
-
-        else:
-            information = (sourceIp, sourcePort, destinyIp, destinyPort, type)
-
-        return information
+        return (sourceIp,sourcePort,sourceMask,ps,rs,sa,saAck,act,actAck,type,tv,message)

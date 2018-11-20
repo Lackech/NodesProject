@@ -106,7 +106,7 @@ class NodeAwakener(Node):
 
             # Verificamos si el mensaje es una respuesta
             if decryptedMessage[SOURCE_IP] == checkingAddress[IP] and decryptedMessage[SOURCE_PORT] == checkingAddress[
-                PORT] and decryptedMessage[TYPE] == 3:
+                PORT] and decryptedMessage[HELLO_ACK] == 1:
 
                 success = True
         except:
@@ -127,11 +127,17 @@ class NodeAwakener(Node):
 
         #Envía un mensaje codificado
         encryptedMessage = self.bitnator.encrypt(
-            addressOrigen= self.address,
-            addressDestiny= otherAddress,
-            type= 2,
-            n= 0,
-            data= "empty"
+            addressOrigen = self.address,
+            maskOrigen=self.mascara,
+            ps = 0,
+            rs = 0,
+            sa = 1,
+            saAck = 0,
+            act = 0,
+            actAck = 0,
+            type = 0,
+            tv = 0,
+            data = "empty"
         )
 
         try:
