@@ -27,16 +27,11 @@ DISTANE = 'Distance'
 # Variables de flag del paquete
 SOURCE_IP = 0
 SOURCE_PORT = 1
-SOURCE_MASK = 2
-SERVER_REQUEST = 3
-SERVER_ACK = 4
-HELLO = 5
-HELLO_ACK = 6
-UPDATE = 7
-UPDATE_ACK = 8
-TYPE = 9
-NUM_NEIGHBORS = 10
-MESSAGE = 11
+DESTINY_IP = 2
+DESTINY_PORT = 3
+TYPE = 4
+N = 5
+DATA = 6
 
 # Diseño del paquete:
     ########################################################################################################################
