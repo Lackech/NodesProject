@@ -123,7 +123,7 @@ class NodeUDP(Node):
 
 
     # Se encarga de construir y enviar el mensaje al nodo que debe
-    def send(self, otherAddress, ps, rs, sa, saAck, act, actAck, type, tv, data):
+    def send(self, otherAddress, ):
         success = False
         # Crea la conexión con el servidor
         clientSocket = socket(AF_INET, SOCK_DGRAM)
@@ -131,16 +131,10 @@ class NodeUDP(Node):
         # Envía un mensaje codificado
         encryptedMessage = self.bitnator.encrypt(
             addressOrigen=self.address,
-            maskOrigen=self.mascara,
-            ps=ps,
-            rs=rs,
-            sa=sa,
-            saAck=saAck,
-            act=act,
-            actAck=actAck,
+            addressDestiny=otherAddress,
             type=type,
-            tv=tv,
-            data=data
+            n=0,
+            data="empty"
         )
 
         try:
