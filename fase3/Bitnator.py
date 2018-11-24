@@ -210,7 +210,7 @@ class Bitnator:
     def decryptNeighbors(self,n,data):
         try:
             lista = []
-            
+
             for i in range(0, n):
 
                 # Optenemos el Ip

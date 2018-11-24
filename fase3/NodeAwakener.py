@@ -126,13 +126,7 @@ class NodeAwakener(Node):
         clientSocket = socket(AF_INET, SOCK_DGRAM)
 
         #Envía un mensaje codificado
-        encryptedMessage = self.bitnator.encrypt(
-            addressOrigen= self.address,
-            addressDestiny= otherAddress,
-            type= 2,
-            n= 0,
-            data= "empty"
-        )
+        encryptedMessage = self.bitnator.encryptTypePacket(DISPATCHER)
 
         try:
             # Esperamos a que el nodo se cree, para poder enviar el mensaje

@@ -11,10 +11,6 @@ NODE_AWAKENER_MASCARA = 2
 NEIGHBOR_SERVER_ADDRESS = ('127.0.0.1',2000)
 NEIGHBOR_SERVER_MASCARA = 2
 
-# Variables para accesar al ip y puerto en ls variables tipo address
-IP = 0
-PORT = 1
-
 # Lista con los nombres para localizar la información en el diccionario creado por el lector de archivos
 NODE_IP = 'Node_ip'
 NODE_MASCARA = 'Node_mascara'
@@ -22,28 +18,35 @@ NODE_PORT = 'Node_port'
 NEIGHBOR_IP = 'Neighbor_ip'
 NEIGHBOR_MASCARA = 'Neighbor_mascara'
 NEIGHBOR_PORT = 'Neighbor_port'
-DISTANE = 'Distance'
+DISTANCE = 'Distance'
 
-# Variables de flag del paquete
-SOURCE_IP = 0
-SOURCE_PORT = 1
-DESTINY_IP = 2
-DESTINY_PORT = 3
-TYPE = 4
-N = 5
-DATA = 6
+# Posición de cada valor en el paquete ya desencriptado, para cada uno de los diferentes tipos de paquete
+# -----GENERAL----- #
 
-# Diseño del paquete:
-    ########################################################################################################################
-    #           #               #       #       #       #       #       #        #        #           #       #           ##
-    # IP Origen # Puerto Origen #  P.S  #  R.S  #  S.A  #  ACK  #  Act  #  ACK   #  Tipo  #  Relleno  #  T.V  #   Datos   ##
-    #           #               #       #       #       #       #       #        #        #           #       #           ##
-    ########################################################################################################################
-    #           #               #       #       #       #       #       #        #        #           #       #           ##
-    # 4 Bytes   #   2 Bytes     #  bit  #  bit  #  bit  #  bit  #  bit  #  bit   #  bit   #    bit    # byte  # 512 bytes ##
-    #           #               #       #       #       #       #       #        #        #           #       #           ##
-    ########################################################################################################################
+TYPE = 0
 
+# -----ACTUALIZACION----- #
+
+N_ACT = 1
+REACHEABILITY_TABLE = 3
+
+
+# -----INUNDACION----- #
+
+JUMPS = 1
+
+# -----DATOS----- #
+
+ORIGIN_IP = 1
+ORIGIN_PORT = 2
+DESTINY_IP = 3
+DESTINY_PORT = 4
+N_DATA = 5
+MESSAGE = 6
+
+# -----COSTO----- #
+
+PRICE = 1
 
 class Node:
 
