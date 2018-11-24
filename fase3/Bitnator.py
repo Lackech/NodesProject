@@ -14,83 +14,203 @@
 IP = 0
 PORT = 1
 
+# Tipos de mensajes
+ACTUALIZATION = 1
+ALIVE = 2
+YES_ALIVE = 3
+FLOODING = 4
+DATA = 5
+COST = 6
+DEATH = 7
+DISPATCHER = 255
+SERVER = 254
+
 class Bitnator:
 
-    '''
-        addressOrigen :param, contien tanto el ip como el puerto de la dircción origen
-        addressDestino :param, contiene tanto el ip como el puesto de la dirección destino
-        type :param, indica que tipo de paquete se está enviando
-        N :param, sí el mensaje es de datos indica la cantidad que se está enviando, sí es de alcanzabilidad dice la cantidad de filas
-        data :param, la información que contiene el paquete
-    '''
+    # Encripción de paquetes que solo contienen el tipo [Muerte - Vivo/Respuesta - Pedir/Devolver]
+    def encryptTypePacket(self,type):
+        return type.to_bytes(1,'big')
 
-    def encrypt(self,addressOrigen,addressDestiny,type,data):
-        encryptedMessage = bytearray()
 
-        # Encriptamos la dirección de quien está enviando el paquete
-        encryptedMessage += self.encryptIp(addressOrigen[IP])
-        encryptedMessage += addressOrigen[PORT].to_bytes(2,'big')
-        # Encriptamos la dirección de a queién se le está enviando el paquete
-        encryptedMessage += self.encryptIp(addressDestiny[IP])
-        encryptedMessage += addressDestiny[PORT].to_bytes(2, 'big')
 
-        # Encriptamos el byte de banderas
-        encryptedMessage += type.to_bytes(1,'big')
 
-        # Encriptamos los datos que vienen en el mensaje, primero tenemos que ver que información se va a enviar
-        # puede ser un mensaje normal, o la lista de vecinos, para eso verificamos si la bandera rs o act están
-        # encendidas
-        if type == 1 or type == 4 or type == 5:
-            # Encritamos el byte que dice la cantidad de datos enviados
-            if type == 1 or type == 4:
-                # Quiere decir que en los datos viene una lista de vecinos, por lo que tiene un proceso de
-                # encriptación diferente
-                encryptedMessage += int(len(data)/4).to_bytes(2, 'big')
-                encodedData = self.encryptNeighbours(data)
-            else:
-                encodedData = data.encode('utf-8')
-                encryptedMessage += len(encodedData).to_bytes(2, 'big')
 
-            # Conccatenamos los datos encriptados
-            encryptedMessage += encodedData
+    # Encripción de paquetes de tipo actualización
+    def encryptActualizationPacket(self,n,reachabilityTable):
+        encryptedPacket = bytearray()
 
-        # Retornamos el mensaje encriptado
-        return encryptedMessage
+        # Encriptamos el tipo
+        encryptedPacket += ACTUALIZATION.to_bytes(1,'big')
+
+        # Encriptamos el n
+        encryptedPacket += n.to_bytes(2,'big')
+
+        # Encriptamos la tabla de alcanzabilidad
+        encryptedPacket += self.encryptReachabilityTable(reachabilityTable)
+
+        return encryptedPacket
+
+
 
 
 
     # Se encarga de encriptar la lista de vecinos
-    def encryptNeighbours(self,data):
-        try:
+    def encryptReachabilityTable(self, reachabilityTable):
+        encryptedReachabilityTable = bytearray()
 
-            mensaje = bytearray()
-            for entrada in data:
-                IP_split = entrada[0]
-                port_split = entrada[1]
-                mask_split = entrada[2]
-                cost_split = entrada[3]
-                IP_bit = self.encryptIp(IP_split)
-                port_bit = int(port_split).to_bytes(2,'big')
-                mask_bit = int(mask_split).to_bytes(1,'big')
-                cost_bit = int(cost_split).to_bytes(3,'big')
+        for entrada in reachabilityTable:
+            IP_split = entrada[0]
+            port_split = entrada[1]
+            mask_split = entrada[2]
+            cost_split = entrada[3]
+            IP_bit = self.encryptIp(IP_split)
+            port_bit = int(port_split).to_bytes(2, 'big')
+            mask_bit = int(mask_split).to_bytes(1, 'big')
+            cost_bit = int(cost_split).to_bytes(3, 'big')
 
-                mensaje += IP_bit
-                mensaje += port_bit
-                mensaje += mask_bit
-                mensaje += cost_bit
+            encryptedReachabilityTable += IP_bit
+            encryptedReachabilityTable += port_bit
+            encryptedReachabilityTable += mask_bit
+            encryptedReachabilityTable += cost_bit
 
-        except:
-            pass
+        return encryptedReachabilityTable
 
 
-        return mensaje
+
+
+
+    # Encripción de paquetes de inundación
+    def encryptInundationPacket(self,jumps):
+        encryptedPacket = bytearray()
+
+        # Encriptamos el tipo
+        encryptedPacket += FLOODING.to_bytes(1, 'big')
+
+        # Encriptamos el número de saltos
+        encryptedPacket += jumps.to_bytes(1, 'big')
+
+        return encryptedPacket
+
+
+
+
+
+
+    # Encripción de paquetes de datos
+    def encryptDataPacket(self,originAddress,destinyAddress,n,data):
+        encryptedPacket = bytearray()
+
+        # Encriptamos el tipo
+        encryptedPacket += DATA.to_bytes(1, 'big')
+
+        # Encriptamos la dirección de salida
+        encryptedPacket += self.encryptIp(originAddress[IP])
+        encryptedPacket += originAddress[PORT].to_bytes(2,'big')
+
+        # Encriptamos la dirección de llegada
+        encryptedPacket += self.encryptIp(destinyAddress[IP])
+        encryptedPacket += destinyAddress[PORT].to_bytes(2, 'big')
+
+        # Encriptamos el número e datos enviados
+        encryptedPacket += n.to_bytes(1, 'big')
+
+        # Encriptamos los datos
+        encryptedPacket += data.encode('utf-8')
+
+        return encryptedPacket
+
+
+
+
+
+    # Encripta el ip que recibe por parámetro
+    def encryptIp(self, ip):
+        encryptedIp = bytearray()
+
+        if ip == "localhost":
+            ip = "127.0.0.1"
+
+        ipParts = ip.split('.')
+        for s in ipParts:
+            encryptedIp += int(s).to_bytes(1, 'big')
+
+        return encryptedIp
+
+
+
+
+
+    # Encripción de paquetes de costo
+    def encryptCostPacket(self,type,cost):
+        encryptedPacket = bytearray()
+
+        # Encriptamos el tipo
+        encryptedPacket += COST.to_bytes(1, 'big')
+
+        # Encriptamos el costo
+        encryptedPacket += cost.to_bytes(1, 'big')
+
+        return encryptedPacket
+
+
+
+
+
+    # Desencriptación de un paquete
+    def decryptPacket(self,encryptedPacket):
+        information = 0
+
+        # Desencriptamos el tipo de paquete
+        type = encryptedPacket[0]
+
+        if type == ACTUALIZATION:
+            n = encryptedPacket[1]*256 + encryptedPacket[2]
+            list = self.decryptNeighbors(n,encryptedPacket[3:])
+
+            information = (type,n,list)
+
+        elif type == FLOODING:
+            jumps = encryptedPacket[1]
+
+            information = (type,jumps)
+
+        elif type == DATA:
+            # Obtenemos la dirección de quien está enviando el mensaje
+            originIp = str(encryptedPacket[1]) + "." + str(encryptedPacket[2]) + "." + str(
+                encryptedPacket[3]) + "." + str(encryptedPacket[4])
+            originPort = encryptedPacket[5] * 256 + encryptedPacket[6]
+            # Obtenemo l dirección de a quién se le está enviando el mensaje
+            destinyIp = str(encryptedPacket[7]) + "." + str(encryptedPacket[8]) + "." + str(
+                encryptedPacket[9]) + "." + str(encryptedPacket[10])
+            destinyPort = encryptedPacket[11] * 256 + encryptedPacket[12]
+
+            n = encryptedPacket[13]*256 + encryptedPacket[14]
+
+            message = ""
+            for i in range(15, n):
+                # Concatenamos cada letra al mensaje
+                message += str(encryptedPacket[i])
+
+            information = (type,originIp,originPort,destinyIp,destinyPort,n,message)
+
+        elif type == COST:
+            cost = encryptedPacket[1]*65536 + encryptedPacket[2]*256 + encryptedPacket[3]
+
+            information = (type,cost)
+
+        else:
+            information = (type)
+
+        return information
+
+
 
 
 
     def decryptNeighbors(self,n,data):
         try:
             lista = []
-            j = 0
+            
             for i in range(0, n):
 
                 # Optenemos el Ip
@@ -114,54 +234,3 @@ class Bitnator:
             pass
 
         return lista
-
-    # Encripta el ip que recibe por parámetro
-    def encryptIp(self,ip):
-        encryptedIp = bytearray()
-
-        if ip == "localhost":
-            ip = "127.0.0.1"
-
-        ipParts = ip.split('.')
-        for s in ipParts:
-            encryptedIp += int(s).to_bytes(1, 'big')
-
-        return encryptedIp
-
-
-
-
-
-    def decrypt(self, encryptedMessage):
-        information = 0
-
-        # Obtenemos la dirección de quien está enviando el mensaje
-        sourceIp = str(encryptedMessage[0]) + "." + str(encryptedMessage[1]) + "." + str(encryptedMessage[2]) + "." + str(encryptedMessage[3])
-        sourcePort = encryptedMessage[4]*256 + encryptedMessage[5]
-        # Obtenemo l dirección de a quién se le está enviando el mensaje
-        destinyIp = str(encryptedMessage[6]) + "." + str(encryptedMessage[7]) + "." + str(encryptedMessage[8]) + "." + str(encryptedMessage[9])
-        destinyPort = encryptedMessage[10]*256 + encryptedMessage[11]
-
-        # Obtenemos el tipo de mensaje que se recibió
-        type = encryptedMessage[12]
-
-        # Preguntamos que tipo de mensaje es, dependiendo de esto varía la forma de decodificar los datos
-        if type == 1 or type == 4 or type == 5:
-            # Obtenemos el byte que contiene el número de vecinos
-            n = encryptedMessage[13]*256 + encryptedMessage[14]
-
-            if type == 1 or type == 4:
-                # Quiere decir que es un mensaje con una Tbla de alcanzabilidad o vecinos
-                message = self.decryptNeighbors(n,encryptedMessage[15:])
-            else:
-                message = ""
-                for i in range(15, n):
-                    # Concatenamos cada letra al mensaje
-                    message += str(encryptedMessage[i])
-
-            information = (sourceIp, sourcePort, destinyIp, destinyPort, type, n, message)
-
-        else:
-            information = (sourceIp, sourcePort, destinyIp, destinyPort, type)
-
-        return information
