@@ -1,14 +1,14 @@
 
 # Diseño del paquete:
-    ######################################################################################
-    #           #               #            #                #      #         #         #
-    # IP Origen # Puerto Origen # IP Destino # Puerto Destino # Tipo #    N    #  Datos  #
-    #           #               #            #                #      #         #         #
-    ######################################################################################
-    #           #               #            #                #      #         #         #
-    # 4 Bytes   #   2 Bytes     #  4 Bytes   #    2 Bytes     # Byte # 2 Bytes # N Bytes #
-    #           #               #            #                #      #         #         #
-    ######################################################################################
+    ########################################################################################################################
+    #           #               #       #       #       #       #       #        #        #           #       #           ##
+    # IP Origen # Puerto Origen #  P.S  #  R.S  #  S.A  #  ACK  #  Act  #  ACK   #  Tipo  #  Relleno  #  T.V  #   Datos   ##
+    #           #               #       #       #       #       #       #        #        #           #       #           ##
+    ########################################################################################################################
+    #           #               #       #       #       #       #       #        #        #           #       #           ##
+    # 4 Bytes   #   2 Bytes     #  bit  #  bit  #  bit  #  bit  #  bit  #  bit   #  bit   #    bit    # byte  # 512 bytes ##
+    #           #               #       #       #       #       #       #        #        #           #       #           ##
+    ########################################################################################################################
 
 # Variables para accesar al ip y puerto en ls variables tipo address
 IP = 0
@@ -27,7 +27,6 @@ SERVER = 254
 NEIGHBOURS = 253
 
 class Bitnator:
-
     # Encripción de paquetes que solo contienen el tipo [Muerte - Vivo/Respuesta - Pedir/Devolver]
     def encryptTypePacket(self,type):
         return type.to_bytes(1,'big')
@@ -129,7 +128,7 @@ class Bitnator:
         encryptedPacket += destinyAddress[PORT].to_bytes(2, 'big')
 
         # Encriptamos el número e datos enviados
-        encryptedPacket += n.to_bytes(1, 'big')
+        encryptedPacket += n.to_bytes(2, 'big')
 
         # Encriptamos los datos
         encryptedPacket += data.encode('utf-8')

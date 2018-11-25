@@ -45,7 +45,6 @@ N_DATA = 5
 MESSAGE = 6
 
 # -----COSTO----- #
-
 PRICE = 1
 
 class Node:

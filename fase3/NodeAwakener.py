@@ -108,6 +108,7 @@ class NodeAwakener(Node):
             # Verificamos si el mensaje es una respuesta
             if clientAddress[IP] == checkingAddress[IP] and clientAddress[PORT] == checkingAddress[
                 PORT] and decryptedMessage[TYPE] == DISPATCHER:
+                
                 success = True
         except:
             # Si ocurre un erro no hacemos nada
