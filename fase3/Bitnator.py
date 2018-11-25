@@ -180,7 +180,7 @@ class Bitnator:
         # Desencriptamos el tipo de paquete
         type = encryptedPacket[0]
 
-        if type == ACTUALIZATION:
+        if type == ACTUALIZATION or type == NEIGHBOURS:
             n = encryptedPacket[1]*256 + encryptedPacket[2]
             list = self.decryptNeighbors(n,encryptedPacket[3:])
 
@@ -216,7 +216,7 @@ class Bitnator:
             information = (type,cost)
 
         else:
-            information = (type)
+            information = (type,0)
 
         return information
 
@@ -227,22 +227,21 @@ class Bitnator:
     def decryptNeighbors(self,n,data):
         try:
             lista = []
-
             for i in range(0, n):
 
                 # Optenemos el Ip
-                num1 = data[i * 8 + 0]
-                num2 = data[i * 8 + 1]
-                num3 = data[i * 8 + 2]
-                num4 = data[i * 8 + 3]
+                num1 = data[i * 10 + 0]
+                num2 = data[i * 10 + 1]
+                num3 = data[i * 10 + 2]
+                num4 = data[i * 10 + 3]
 
                 address = str(num1) + "." + str(num2) + "." + str(num3) + "." + str(num4)
 
-                port = data[i * 8 + 4] * 256 + data[i * 8 + 5]
+                port = data[i * 10 + 4] * 256 + data[i * 10 + 5]
 
-                mask = data[i * 8 + 6]
+                mask = data[i * 10 + 6]
 
-                cost = data[i * 8 + 7] * 65536 + data[i * 8 + 8] * 256 + data[i * 8 + 9]
+                cost = data[i * 10 + 7] * 65536 + data[i * 10 + 8] * 256 + data[i * 10 + 9]
 
                 lista.append((str(address),int(port),int(mask),int(cost)))
 

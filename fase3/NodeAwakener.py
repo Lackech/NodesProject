@@ -102,12 +102,11 @@ class NodeAwakener(Node):
             packetMessage, clientAddress = self.socketServer.recvfrom(2048)
 
             # Desencriptamos el mensaje
-            decryptedMessage = self.bitnator.decrypt(packetMessage)
+            decryptedMessage = self.bitnator.decryptPacket(packetMessage)
 
             # Verificamos si el mensaje es una respuesta
             if clientAddress[IP] == checkingAddress[IP] and clientAddress[PORT] == checkingAddress[
                 PORT] and decryptedMessage[TYPE] == DISPATCHER:
-
                 success = True
         except:
             # Si ocurre un erro no hacemos nada
@@ -122,8 +121,6 @@ class NodeAwakener(Node):
     # Se encarga de verificar sí el nodo se despertó correctamente
     def verifyExistence(self,otherAddress):
         success = False
-        #Crea la conexión con el servidor
-        clientSocket = socket(AF_INET, SOCK_DGRAM)
 
         #Envía un mensaje codificado
         encryptedMessage = self.bitnator.encryptTypePacket(DISPATCHER)
@@ -136,16 +133,14 @@ class NodeAwakener(Node):
                 pass
 
             # Tratamos de enviar el mensaje
-            clientSocket.sendto(encryptedMessage,otherAddress)
+            self.socketServer.sendto(encryptedMessage,otherAddress)
 
             # Esperamos una respuesta del nodo
             success = self.listenForAnswers(otherAddress)
+
         except:
             # No hacemo nada
             pass
-
-        # Cerramos la conexión
-        clientSocket.close()
 
         return success
 

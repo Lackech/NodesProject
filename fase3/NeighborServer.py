@@ -37,8 +37,8 @@ class NeighborServer(Node):
             entrada = csv.DictReader(csvarchivo)
             for row in entrada:
 
-                nodeAddress = (row[NODE_IP], row[NODE_PORT])
-                nodeAddressValue = (row[NEIGHBOR_IP],row[NEIGHBOR_PORT],row[NEIGHBOR_MASCARA],row[DISTANCE])
+                nodeAddress = (row[NODE_IP], int(row[NODE_PORT]))
+                nodeAddressValue = (row[NEIGHBOR_IP],int(row[NEIGHBOR_PORT]),int(row[NEIGHBOR_MASCARA]),int(row[DISTANCE]))
                 # Tengo que pasarlo a listas
                 listaValor = [nodeAddressValue]
                 if self.allNeighbors.get(nodeAddress) is None:
@@ -59,7 +59,7 @@ class NeighborServer(Node):
 
 
     def findNodeNeighbors(self):
-        self.socketServer.bind(("", 2000))
+        self.socketServer.bind(self.address)
 
         while self.alive:
             packetMessage, clientAddress = self.socketServer.recvfrom(2048)
