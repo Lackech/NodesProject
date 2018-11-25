@@ -199,10 +199,11 @@ class NodeUDP(Node):
 
                         encryptedPacket = self.bitnator.encryptActualizationPacket(len(list),list)
                         self.send(neighbourAddress,encryptedPacket)
+
+                        list = []
                 finally:
                     self.lockNeighbor.release()
                     self.lockReach.release()
-                    list = []
 
 
 
