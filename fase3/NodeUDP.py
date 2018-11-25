@@ -52,7 +52,7 @@ class NodeUDP(Node):
         # Creamos el hilo que se va a encargar de enviar la tabla cada 30 segundos
         thread = threading.Thread(name='Analizador', target=self.sendReacheabilityTable)
         thread.setDaemon(True)
-        #thread.start()
+        thread.start()
 
         self.nodeUDPMenu()
 
@@ -89,16 +89,16 @@ class NodeUDP(Node):
             clientAddress = information[1]
 
             if decrytedMessage[TYPE] == ACTUALIZATION:
-                print(ACTUALIZATION)
                 try:
                     self.lockReach.acquire()
                     self.lockNeighbor.acquire()
 
-                    for i in (0, decrytedMessage[N_ACT]):
+                    for i in range(0, decrytedMessage[N_ACT]):
                         # Guardamos el nodo en la tabla de alcanzabilidad
-                        self.reachabilityTable[decrytedMessage[REACHEABILITY_TABLE][i][0:3]] = (
-                            decrytedMessage[REACHEABILITY_TABLE][i][3] + self.neighborTable[clientAddress][1],
-                            clientAddress[IP],clientAddress[PORT])
+                        if self.reachabilityTable.get(decrytedMessage[REACHEABILITY_TABLE][i][0:3]) is None or self.reachabilityTable[decrytedMessage[REACHEABILITY_TABLE][i][0:3]][0] > decrytedMessage[REACHEABILITY_TABLE][i][3] + self.neighborTable[clientAddress][1]:
+                            self.reachabilityTable[decrytedMessage[REACHEABILITY_TABLE][i][0:3]] = (
+                                decrytedMessage[REACHEABILITY_TABLE][i][3] + self.neighborTable[clientAddress][1],
+                                clientAddress[IP],clientAddress[PORT])
 
                 finally:
                     self.lockNeighbor.release()
@@ -181,7 +181,7 @@ class NodeUDP(Node):
         while self.alive:
             # Esperamos 30 segundos para enviar la tabla de alcanzabilidad
             try:
-                self.waitingQueue.get(timeout=15)
+                self.waitingQueue.get(timeout=5)
             except:
                 # Continuamos con el método
                 pass
@@ -231,11 +231,11 @@ class NodeUDP(Node):
 
                     self.neighborTable[neighbourInformation] = (self.neighborTable[neighbourInformation][0],intNewDistance,self.neighborTable[neighbourInformation][2])
                 else:
-                    print(self.warningMessage + answer + self.invalidOptionMessage)
+                    pass
             else:
-                print(self.warningMessage + answer + self.invalidOptionMessage)
+                pass
         except:
-            print(self.warningMessage + answer + self.invalidOptionMessage)
+            pass
         finally:
             self.lockNeighbor.release()
             self.lockReach.release()
@@ -295,17 +295,20 @@ class NodeUDP(Node):
     def nodeUDPMenu(self):
         print(self.greetingMessage)
         while self.alive:
-            answer = input(self.optionMessage)
+            try:
+                answer = input(self.optionMessage)
 
-            intAnswer = int(answer)
-            if intAnswer == 1:
-                self.updateDistance()
-            elif intAnswer == 2:
-                # Hay que avisarle a los vecinos
-                self.alive = False
-            elif intAnswer == 3:
-                self.enlitsReachabilityTable()
-            elif intAnswer == 4:
-                self.alive = False
-            else:
-                print(self.warningMessage + answer + self.invalidOptionMessage)
+                intAnswer = int(answer)
+                if intAnswer == 1:
+                    self.updateDistance()
+                elif intAnswer == 2:
+                    # Hay que avisarle a los vecinos
+                    self.alive = False
+                elif intAnswer == 3:
+                    self.enlitsReachabilityTable()
+                elif intAnswer == 4:
+                    self.alive = False
+                else:
+                    print(self.warningMessage + answer + self.invalidOptionMessage)
+            except:
+                pass
