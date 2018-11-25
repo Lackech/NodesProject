@@ -18,6 +18,7 @@ class NodeAwakener(Node):
         self.answerQueue = queue.Queue(1)
 
         self.socketServer = socket(AF_INET, SOCK_DGRAM)
+        self.socketServer.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.socketServer.bind(NODE_AWAKENER_ADDRESS)
 
         # Variabes que sirven para comunicarse con el usuario
@@ -102,12 +103,12 @@ class NodeAwakener(Node):
             packetMessage, clientAddress = self.socketServer.recvfrom(2048)
 
             # Desencriptamos el mensaje
-            decryptedMessage = self.bitnator.decrypt(packetMessage)
+            decryptedMessage = self.bitnator.decryptPacket(packetMessage)
 
             # Verificamos si el mensaje es una respuesta
-            if decryptedMessage[SOURCE_IP] == checkingAddress[IP] and decryptedMessage[SOURCE_PORT] == checkingAddress[
-                PORT] and decryptedMessage[HELLO_ACK] == 1:
-
+            if clientAddress[IP] == checkingAddress[IP] and clientAddress[PORT] == checkingAddress[
+                PORT] and decryptedMessage[TYPE] == DISPATCHER:
+                
                 success = True
         except:
             # Si ocurre un erro no hacemos nada
@@ -122,23 +123,9 @@ class NodeAwakener(Node):
     # Se encarga de verificar sí el nodo se despertó correctamente
     def verifyExistence(self,otherAddress):
         success = False
-        #Crea la conexión con el servidor
-        clientSocket = socket(AF_INET, SOCK_DGRAM)
 
         #Envía un mensaje codificado
-        encryptedMessage = self.bitnator.encrypt(
-            addressOrigen = self.address,
-            maskOrigen=self.mascara,
-            ps = 0,
-            rs = 0,
-            sa = 1,
-            saAck = 0,
-            act = 0,
-            actAck = 0,
-            type = 0,
-            tv = 0,
-            data = "empty"
-        )
+        encryptedMessage = self.bitnator.encryptTypePacket(DISPATCHER)
 
         try:
             # Esperamos a que el nodo se cree, para poder enviar el mensaje
@@ -148,16 +135,14 @@ class NodeAwakener(Node):
                 pass
 
             # Tratamos de enviar el mensaje
-            clientSocket.sendto(encryptedMessage,otherAddress)
+            self.socketServer.sendto(encryptedMessage,otherAddress)
 
             # Esperamos una respuesta del nodo
             success = self.listenForAnswers(otherAddress)
+
         except:
             # No hacemo nada
             pass
-
-        # Cerramos la conexión
-        clientSocket.close()
 
         return success
 

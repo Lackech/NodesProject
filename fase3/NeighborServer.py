@@ -15,6 +15,8 @@ class NeighborServer(Node):
         self.alive = True
 
         self.socketServer = socket(AF_INET, SOCK_DGRAM)
+        self.socketServer.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        self.socketServer.bind(self.address)
 
         self.uploadNeighborsTable("vecinos.csv")
 
@@ -23,9 +25,8 @@ class NeighborServer(Node):
         self.listener.setDaemon(True)
         self.listener.start()
 
-
-
         #self.nodeUDPMenu()
+
 
 
 
@@ -38,8 +39,8 @@ class NeighborServer(Node):
             entrada = csv.DictReader(csvarchivo)
             for row in entrada:
 
-                nodeAddress = (row[NODE_IP], row[NODE_PORT])
-                nodeAddressValue = (row[NEIGHBOR_IP],row[NEIGHBOR_PORT],row[NEIGHBOR_MASCARA],row[DISTANE])
+                nodeAddress = (row[NODE_IP], int(row[NODE_PORT]))
+                nodeAddressValue = (row[NEIGHBOR_IP],int(row[NEIGHBOR_PORT]),int(row[NEIGHBOR_MASCARA]),int(row[DISTANCE]))
                 # Tengo que pasarlo a listas
                 listaValor = [nodeAddressValue]
                 if self.allNeighbors.get(nodeAddress) is None:
@@ -55,37 +56,25 @@ class NeighborServer(Node):
 
         return success
 
-    def findNodeNeighbors(self):
-        self.socketServer.bind(("", 2000))
 
+
+
+
+    def findNodeNeighbors(self):
         while self.alive:
             packetMessage, clientAddress = self.socketServer.recvfrom(2048)
-            decryptPacket = self.bitnator.decrypt(packetMessage)
+            decryptPacket = self.bitnator.decryptPacket(packetMessage)
 
             #Analizamos el paquete recibido y le enviamos sus vecinos
-            if(decryptPacket[SERVER_REQUEST] == 1):
-                # Armo un paquete con los vecinos y lo envio
-                ipRequest = decryptPacket[SOURCE_IP]
-                portRequest = decryptPacket[SOURCE_PORT]
-                # Ocupo la mascara, preguntarle a Fake si lo saco de aqui o si modificamos todo el resto
-                dicAddress = (ipRequest,str(portRequest))
-                listaVecinos = self.allNeighbors.get(dicAddress)
+            if(decryptPacket[TYPE] == SERVER):
+                # Obtengo la lista de vecinos
+                listaVecinos = self.allNeighbors.get(clientAddress)
+
                 if listaVecinos is not None:
-                    # Armo el paquete para enviar
-                    encryptedMessage = self.bitnator.encrypt(
-                        addressOrigen=NEIGHBOR_SERVER_ADDRESS,
-                        maskOrigen=NEIGHBOR_SERVER_MASCARA,
-                        ps=0,
-                        rs=1,
-                        sa=0,
-                        saAck=0,
-                        act=0,
-                        actAck=0,
-                        type=0,
-                        tv=len(listaVecinos),
-                        data=listaVecinos
-                    )
-                    self.socketServer.sendto(encryptedMessage,(ipRequest,portRequest))
+                    # Armo el paquete que se va a enviar
+                    encryptedMessage = self.bitnator.encryptNeighboursPacket(len(listaVecinos),listaVecinos)
+                    self.socketServer.sendto(encryptedMessage,clientAddress)
+
 
 
 
