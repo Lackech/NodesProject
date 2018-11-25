@@ -66,13 +66,13 @@ class NeighborServer(Node):
             decryptPacket = self.bitnator.decryptPacket(packetMessage)
 
             #Analizamos el paquete recibido y le enviamos sus vecinos
-            if(decryptPacket[TYPE] == 254):
+            if(decryptPacket[TYPE] == SERVER):
                 # Obtengo la lista de vecinos
                 listaVecinos = self.allNeighbors.get(clientAddress)
 
                 if listaVecinos is not None:
                     # Armo el paquete que se va a enviar
-                    encryptedMessage = self.bitnator.encryptActualizationPacket(len(listaVecinos),listaVecinos)
+                    encryptedMessage = self.bitnator.encryptNeighboursPacket(len(listaVecinos),listaVecinos)
                     self.socketServer.sendto(encryptedMessage,clientAddress)
 
 

@@ -105,8 +105,8 @@ class NodeAwakener(Node):
             decryptedMessage = self.bitnator.decrypt(packetMessage)
 
             # Verificamos si el mensaje es una respuesta
-            if decryptedMessage[SOURCE_IP] == checkingAddress[IP] and decryptedMessage[SOURCE_PORT] == checkingAddress[
-                PORT] and decryptedMessage[TYPE] == 3:
+            if clientAddress[IP] == checkingAddress[IP] and clientAddress[PORT] == checkingAddress[
+                PORT] and decryptedMessage[TYPE] == DISPATCHER:
 
                 success = True
         except:

@@ -24,6 +24,7 @@ COST = 6
 DEATH = 7
 DISPATCHER = 255
 SERVER = 254
+NEIGHBOURS = 253
 
 class Bitnator:
 
@@ -36,17 +37,30 @@ class Bitnator:
 
 
     # Encripción de paquetes de tipo actualización
+    def encryptNeighboursPacket(self, n, neighboursTable):
+        encryptedPacket = bytearray()
+
+        # Encriptamos el tipo
+        encryptedPacket += NEIGHBOURS.to_bytes(1, 'big')
+
+        # Encriptamos la tabla de alcanzabilidad
+        encryptedPacket += self.encryptTable(n, neighboursTable)
+
+        return encryptedPacket
+
+
+
+
+
+    # Encripción de paquetes de tipo actualización
     def encryptActualizationPacket(self,n,reachabilityTable):
         encryptedPacket = bytearray()
 
         # Encriptamos el tipo
         encryptedPacket += ACTUALIZATION.to_bytes(1,'big')
 
-        # Encriptamos el n
-        encryptedPacket += n.to_bytes(2,'big')
-
         # Encriptamos la tabla de alcanzabilidad
-        encryptedPacket += self.encryptReachabilityTable(reachabilityTable)
+        encryptedPacket += self.encryptTable(n, reachabilityTable)
 
         return encryptedPacket
 
@@ -55,8 +69,11 @@ class Bitnator:
 
 
     # Se encarga de encriptar la lista de vecinos
-    def encryptReachabilityTable(self, reachabilityTable):
-        encryptedReachabilityTable = bytearray()
+    def encryptTable(self, n, reachabilityTable):
+        encryptedTable = bytearray()
+
+        # Encriptamos el n
+        encryptedTable += n.to_bytes(2, 'big')
 
         for entrada in reachabilityTable:
             IP_split = entrada[0]
@@ -68,12 +85,12 @@ class Bitnator:
             mask_bit = int(mask_split).to_bytes(1, 'big')
             cost_bit = int(cost_split).to_bytes(3, 'big')
 
-            encryptedReachabilityTable += IP_bit
-            encryptedReachabilityTable += port_bit
-            encryptedReachabilityTable += mask_bit
-            encryptedReachabilityTable += cost_bit
+            encryptedTable += IP_bit
+            encryptedTable += port_bit
+            encryptedTable += mask_bit
+            encryptedTable += cost_bit
 
-        return encryptedReachabilityTable
+        return encryptedTable
 
 
 
