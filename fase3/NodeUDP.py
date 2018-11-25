@@ -38,6 +38,7 @@ class NodeUDP(Node):
 
         # Creamos el socket servido del nodo
         self.socketServer = socket(AF_INET, SOCK_DGRAM)
+        self.socketServer.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.socketServer.bind(self.address)
 
         self.listener = threading.Thread(name='daemon', target=self.listen)
@@ -65,13 +66,14 @@ class NodeUDP(Node):
 
         while self.alive:
             # Recibimos el paquete
-            print(9)
-            packetMessage, clientAddress = self.socketServer.recvfrom(2048)
-            print(8)
+            try:
+                packetMessage, clientAddress = self.socketServer.recvfrom(2048)
 
-            # Desencrptamos el paquete
-            decrytedMessage = self.bitnator.decryptPacket(packetMessage)
-            self.packetsQueue.put_nowait((decrytedMessage,clientAddress))
+                # Desencrptamos el paquete
+                decrytedMessage = self.bitnator.decryptPacket(packetMessage)
+                self.packetsQueue.put_nowait((decrytedMessage,clientAddress))
+            except:
+                pass
 
         self.socketServer.close()
 
@@ -103,55 +105,47 @@ class NodeUDP(Node):
                     self.lockReach.release()
 
 
-            elif decrytedMessage[TYPE] == ALIVE:
-                print(ALIVE)
-                # Le contestamos al nodo que nos envío el paquete con una confirmación
-                encryptedPaket = self.bitnator.encryptTypePacket(YES_ALIVE)
-                self.send(clientAddress, encryptedPaket)
-
-
-            elif decrytedMessage[TYPE] == YES_ALIVE:
-                print(YES_ALIVE)
+            elif decrytedMessage[TYPE] == ALIVE or decrytedMessage[TYPE] == YES_ALIVE:
                 # Un nodo vecino nos confirmó que sí está vivo
-                self.neighborTable[clientAddress] = (self.neighborTable[clientAddress][0],self.neighborTable[clientAddress][1],True)
+                self.neighborTable[clientAddress] = (
+                self.neighborTable[clientAddress][0], self.neighborTable[clientAddress][1], True)
 
                 # Lo guardamos en la tabla de alcanzabilidad
-                self.reachabilityTable[clientAddress[IP],clientAddress[PORT],self.neighborTable[clientAddress][0]] = (
-                    self.neighborTable[clientAddress][1],clientAddress[IP],clientAddress[PORT])
+                self.reachabilityTable[clientAddress[IP], clientAddress[PORT], self.neighborTable[clientAddress][0]] = (
+                    self.neighborTable[clientAddress][1], clientAddress[IP], clientAddress[PORT])
+
+                if decrytedMessage[TYPE] == ALIVE:
+                    # Le contestamos al nodo que nos envío el paquete con una confirmación
+                    encryptedPaket = self.bitnator.encryptTypePacket(YES_ALIVE)
+                    self.send(clientAddress, encryptedPaket)
 
 
             elif decrytedMessage[TYPE] == FLOODING:
-                print(FLOODING)
                 pass
 
 
             elif decrytedMessage[TYPE] == DATA:
-                print(DATA)
                 pass
 
 
             elif decrytedMessage[TYPE] == COST:
-                print(COST)
                 pass
 
 
             elif decrytedMessage[TYPE] == DEATH:
-                print(DEATH)
                 pass
 
 
             elif decrytedMessage[TYPE] == DISPATCHER:
-                print(DISPATCHER)
                 # Le contestamos al dispatcher que el nodo sí se levantó correctamente
                 encryptedPaket = self.bitnator.encryptTypePacket(DISPATCHER)
                 self.send(clientAddress, encryptedPaket)
 
 
             elif decrytedMessage[TYPE] == NEIGHBOURS:
-                print(NEIGHBOURS)
                 for i in range(0,decrytedMessage[N_ACT]):
                     # Guardamos el vecino en la tabla
-                    self.neighborTable[decrytedMessage[REACHEABILITY_TABLE][i][0:2]] = (decrytedMessage[REACHEABILITY_TABLE][i][2],False)
+                    self.neighborTable[decrytedMessage[REACHEABILITY_TABLE][i][0:2]] = (decrytedMessage[REACHEABILITY_TABLE][i][2],decrytedMessage[REACHEABILITY_TABLE][i][3],False)
 
                     # Preguntamos sí el vecino está vivo
                     encryptedPacket = self.bitnator.encryptTypePacket(ALIVE)
@@ -165,14 +159,7 @@ class NodeUDP(Node):
     # Se encarga de construir y enviar el mensaje al nodo que debe
     def send(self, otherAddress,encryptedPaket):
         # Tratamos de enviar el mensaje, con la respuesta
-        print(1)
-        #connectionSocket = socket(AF_INET, SOCK_DGRAM)
-        print(2)
-        #connectionSocket.bind(self.address)
-        print(3)
-        #self.socketServer.sendto(encryptedPaket, otherAddress)
-        print(4)
-        #connectionSocket.close()
+        self.socketServer.sendto(encryptedPaket, otherAddress)
 
 
 
@@ -296,7 +283,7 @@ class NodeUDP(Node):
                 print(str(i) + ". (" + reachableNode[0] + " , " + str(reachableNode[1]) + "," + str(
                     reachableNode[2]) + ") - (" + str(
                     self.reachabilityTable[reachableNode][0]) + "," + self.reachabilityTable[reachableNode][1] + "," + str(
-                    self.reachabilityTable[reachableNode][2]) + "," + str(self.reachabilityTable[reachableNode][3]) + ")")
+                    self.reachabilityTable[reachableNode][2]) + ")")
                 i = i + 1
         finally:
             self.lockReach.release()
@@ -310,18 +297,15 @@ class NodeUDP(Node):
         while self.alive:
             answer = input(self.optionMessage)
 
-            try:
-                intAnswer = int(answer)
-                if intAnswer == 1:
-                    self.updateDistance()
-                elif intAnswer == 2:
-                    # Hay que avisarle a los vecinos
-                    self.alive = False
-                elif intAnswer == 3:
-                    self.enlitsReachabilityTable()
-                elif intAnswer == 4:
-                    self.alive = False
-                else:
-                    print(self.warningMessage + answer + self.invalidOptionMessage)
-            except:
+            intAnswer = int(answer)
+            if intAnswer == 1:
+                self.updateDistance()
+            elif intAnswer == 2:
+                # Hay que avisarle a los vecinos
+                self.alive = False
+            elif intAnswer == 3:
+                self.enlitsReachabilityTable()
+            elif intAnswer == 4:
+                self.alive = False
+            else:
                 print(self.warningMessage + answer + self.invalidOptionMessage)

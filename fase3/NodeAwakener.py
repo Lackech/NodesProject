@@ -18,6 +18,7 @@ class NodeAwakener(Node):
         self.answerQueue = queue.Queue(1)
 
         self.socketServer = socket(AF_INET, SOCK_DGRAM)
+        self.socketServer.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.socketServer.bind(NODE_AWAKENER_ADDRESS)
 
         # Variabes que sirven para comunicarse con el usuario

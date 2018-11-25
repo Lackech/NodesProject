@@ -15,6 +15,8 @@ class NeighborServer(Node):
         self.alive = True
 
         self.socketServer = socket(AF_INET, SOCK_DGRAM)
+        self.socketServer.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        self.socketServer.bind(self.address)
 
         self.uploadNeighborsTable("vecinos.csv")
 
@@ -59,8 +61,6 @@ class NeighborServer(Node):
 
 
     def findNodeNeighbors(self):
-        self.socketServer.bind(self.address)
-
         while self.alive:
             packetMessage, clientAddress = self.socketServer.recvfrom(2048)
             decryptPacket = self.bitnator.decryptPacket(packetMessage)
