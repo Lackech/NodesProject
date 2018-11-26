@@ -203,9 +203,9 @@ class Bitnator:
             n = encryptedPacket[13]*256 + encryptedPacket[14]
 
             message = ""
-            for i in range(15, n):
+            for i in range(15, 15 + n):
                 # Concatenamos cada letra al mensaje
-                message += str(encryptedPacket[i])
+                message += chr(encryptedPacket[i])
 
             information = (type,originIp,originPort,destinyIp,destinyPort,n,message)
 

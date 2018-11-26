@@ -26,15 +26,19 @@ class NodeUDP(Node):
         self.greetingMessage = "Welcome to the Node UDP...\n\n"
         self.optionMessage = ("Please select one of the following options:\n"
                               "\t1. Change a link's distance\n"
-                              "\t2. Kill myself\n"
-                              "\t3. Print reachability table\n"
-                              "\t4. Exit\n"
+                              "\t2. Send a message\n"
+                              "\t3. Kill myself\n"
+                              "\t4. Print reachability table\n"
+                              "\t5. Print neighbour table\n"
+                              "\t6. Exit\n"
                               "\tYour answer --> ")
 
         self.neighborOptionMessage = "Please write the number of the Node to modify --> "
         self.changeDistanceMessage = "Please write the new distance --> "
 
-        self.failedUpdate = "Sorry something went updating the Node distance"
+        self.reachableNodeOptionMessage = "Please write the number of the Node to whom you want to send a message --> "
+        self.writeMessageMessage = "Please write the message you want to send to the other Node --> "
+        self.recievedMessageMessage = "You recieved the following message --> "
 
         # Creamos el socket servido del nodo
         self.socketServer = socket(AF_INET, SOCK_DGRAM)
@@ -95,10 +99,10 @@ class NodeUDP(Node):
 
                     for i in range(0, decrytedMessage[N_ACT]):
                         # Guardamos el nodo en la tabla de alcanzabilidad
-                        if self.reachabilityTable.get(decrytedMessage[REACHEABILITY_TABLE][i][0:3]) is None or self.reachabilityTable[decrytedMessage[REACHEABILITY_TABLE][i][0:3]][0] > decrytedMessage[REACHEABILITY_TABLE][i][3] + self.neighborTable[clientAddress][1]:
-                            self.reachabilityTable[decrytedMessage[REACHEABILITY_TABLE][i][0:3]] = (
+                        if self.reachabilityTable.get(decrytedMessage[REACHEABILITY_TABLE][i][0:2]) is None or self.reachabilityTable[decrytedMessage[REACHEABILITY_TABLE][i][0:2]][0] > decrytedMessage[REACHEABILITY_TABLE][i][3] + self.neighborTable[clientAddress][1]:
+                            self.reachabilityTable[decrytedMessage[REACHEABILITY_TABLE][i][0:2]] = (
                                 decrytedMessage[REACHEABILITY_TABLE][i][3] + self.neighborTable[clientAddress][1],
-                                clientAddress[IP],clientAddress[PORT])
+                                decrytedMessage[REACHEABILITY_TABLE][i][2],clientAddress[IP],clientAddress[PORT])
 
                 finally:
                     self.lockNeighbor.release()
@@ -111,8 +115,8 @@ class NodeUDP(Node):
                 self.neighborTable[clientAddress][0], self.neighborTable[clientAddress][1], True)
 
                 # Lo guardamos en la tabla de alcanzabilidad
-                self.reachabilityTable[clientAddress[IP], clientAddress[PORT], self.neighborTable[clientAddress][0]] = (
-                    self.neighborTable[clientAddress][1], clientAddress[IP], clientAddress[PORT])
+                self.reachabilityTable[clientAddress] = (
+                    self.neighborTable[clientAddress][1], self.neighborTable[clientAddress][0], clientAddress[IP], clientAddress[PORT])
 
                 if decrytedMessage[TYPE] == ALIVE:
                     # Le contestamos al nodo que nos envío el paquete con una confirmación
@@ -125,7 +129,10 @@ class NodeUDP(Node):
 
 
             elif decrytedMessage[TYPE] == DATA:
-                pass
+                if self.address[IP] == decrytedMessage[DESTINY_IP] and self.address[PORT] == decrytedMessage[DESTINY_PORT]:
+                    print(self.recievedMessageMessage + decrytedMessage[MESSAGE])
+                else:
+                    pass
 
 
             elif decrytedMessage[TYPE] == COST:
@@ -136,8 +143,7 @@ class NodeUDP(Node):
                         self.neighborTable[clientAddress][0], decrytedMessage[PRICE], True)
 
                     # Lo cambiamos en la tabla de alcanzabilidad
-                    reachabilityKey = (clientAddress[IP],clientAddress[PORT],self.neighborTable[clientAddress][0])
-                    self.reachabilityTable[reachabilityKey] = (decrytedMessage[PRICE],clientAddress[IP],clientAddress[PORT])
+                    self.reachabilityTable[clientAddress] = (decrytedMessage[PRICE],self.neighborTable[clientAddress][0],clientAddress[IP],clientAddress[PORT])
                 else:
                     # EL costo es mayor por lo tanto tenemos que realizar inundación
                     pass
@@ -149,7 +155,7 @@ class NodeUDP(Node):
                     self.neighborTable[clientAddress][0], self.neighborTable[clientAddress][1], False)
 
                 # Lo eliminamos de la tabla de alcanzabilidad
-                self.reachabilityTable.pop((clientAddress[IP],clientAddress[PORT],self.neighborTable[clientAddress][0]))
+                self.reachabilityTable.pop(clientAddress)
 
                 # Realizamos la inundación
                 pass
@@ -220,8 +226,8 @@ class NodeUDP(Node):
                     for neighbourAddress in self.neighborTable:
                         # Este loop se encarga de meter lo que hay en la tabla de alcanzabilidad
                         for reachableNode in self.reachabilityTable:
-                            if reachableNode[0] != neighbourAddress[IP] or reachableNode[1] != neighbourAddress[PORT]:
-                                list.append((reachableNode[0],reachableNode[1],reachableNode[2],self.reachabilityTable[reachableNode][0]))
+                            if reachableNode != neighbourAddress:
+                                list.append((reachableNode[0],reachableNode[1],self.reachabilityTable[reachableNode][1],self.reachabilityTable[reachableNode][0]))
 
                         encryptedPacket = self.bitnator.encryptActualizationPacket(len(list),list)
                         self.send(neighbourAddress,encryptedPacket)
@@ -247,7 +253,6 @@ class NodeUDP(Node):
             intAnswer = int(answer)
             if intAnswer > 0 and intAnswer <= len(self.neighborTable):
                 neighbourInformation = self.getNeighbour(intAnswer)
-                reachabilityKey = (neighbourInformation[IP],neighbourInformation[PORT],self.neighborTable[neighbourInformation][0])
 
                 newDistance = input(self.changeDistanceMessage)
                 intNewDistance = int(newDistance)
@@ -260,9 +265,9 @@ class NodeUDP(Node):
                     self.neighborTable[neighbourInformation][2])
 
                     # Vemos sí es necesario cambiar la información en la tabla de alcanzabilidad
-                    if self.reachabilityTable[reachabilityKey][1] == neighbourInformation[IP] and self.reachabilityTable[reachabilityKey][2] == neighbourInformation[PORT]:
-                        self.reachabilityTable[reachabilityKey] = (intNewDistance,
-                            neighbourInformation[IP], neighbourInformation[PORT])
+                    if self.reachabilityTable[neighbourInformation][2] == neighbourInformation[IP] and self.reachabilityTable[neighbourInformation][3] == neighbourInformation[PORT]:
+                        self.reachabilityTable[neighbourInformation] = (intNewDistance,
+                            self.neighborTable[neighbourInformation][0],neighbourInformation[IP], neighbourInformation[PORT])
 
                     # Enviamos el mensaje de cambio de costo
                     encryptedPacket = self.bitnator.encryptCostPacket(intNewDistance)
@@ -274,6 +279,36 @@ class NodeUDP(Node):
                 pass
         except:
             pass
+        finally:
+            self.lockNeighbor.release()
+            self.lockReach.release()
+
+
+
+
+
+    # Se encarga de enviar un mensaje con datos a uno de los vecinos que está en la tabla de alcanzabilidad
+    def sendData(self):
+        try:
+            self.lockReach.acquire()
+            self.lockNeighbor.acquire()
+
+            self.enlitsReachabilityTable()
+            answer = input(self.reachableNodeOptionMessage)
+
+            intAnswer = int(answer)
+            if intAnswer > 0 and intAnswer <= len(self.reachabilityTable):
+
+                # Obtenemos la informacion necesaria para enviar el mensaje
+                reachableNodeInformation = self.getReachableNode(intAnswer)
+                routeNeighbour = (self.reachabilityTable[reachableNodeInformation][2],self.reachabilityTable[reachableNodeInformation][3])
+
+                # Le pedimos el mensaje al usuario
+                message = input(self.writeMessageMessage)
+
+                encryptedPacket = self.bitnator.encryptDataPacket(self.address,reachableNodeInformation,len(message),message)
+                self.send(routeNeighbour,encryptedPacket)
+
         finally:
             self.lockNeighbor.release()
             self.lockReach.release()
@@ -306,8 +341,39 @@ class NodeUDP(Node):
 
         for neighbour in self.neighborTable:
             if self.neighborTable[neighbour][2] == True:
-                print(str(i) + ". (" + neighbour[0] + " , " + str(neighbour[1]) + ")")
+                print(str(i) + "." , neighbour)
             i = i + 1
+
+
+
+
+
+    # Imprime una lista con los vecinos del nodo
+    def enlistNeighboursExtended(self):
+        i = 1
+
+        for neighbour in self.neighborTable:
+            if self.neighborTable[neighbour][2] == True:
+                print(str(i) + ".", neighbour,"-",self.neighborTable[neighbour])
+            i = i + 1
+
+
+
+
+
+    # Retorna el nodo seleccionado de la tabla de alcanzabilidad
+    def getReachableNode(self,option):
+        i = 1
+        reachableNodeInformation = 0
+
+        for reachableNode in self.reachabilityTable:
+            if i == option:
+                reachableNodeInformation = reachableNode
+                break
+            else:
+                i = i + 1
+
+        return reachableNodeInformation
 
 
 
@@ -316,19 +382,23 @@ class NodeUDP(Node):
     # Se encarga de imprimir la taba de alcanzabilidad
     def enlitsReachabilityTable(self):
         i = 1
-        try:
-            self.lockReach.acquire()
 
-            for reachableNode in self.reachabilityTable:
-                print(str(i) + ". (" + reachableNode[0] + " , " + str(reachableNode[1]) + "," + str(
-                    reachableNode[2]) + ") - (" + str(
-                    self.reachabilityTable[reachableNode][0]) + "," + self.reachabilityTable[reachableNode][1] + "," + str(
-                    self.reachabilityTable[reachableNode][2]) + ")")
-                i = i + 1
+        for reachableNode in self.reachabilityTable:
+            print(str(i) + ".", reachableNode)
+            i = i + 1
 
 
-        finally:
-            self.lockReach.release()
+
+
+
+    # Se encarga de imprimir la taba de alcanzabilidad
+    def enlitsReachabilityTableExtended(self):
+        i = 1
+
+        for reachableNode in self.reachabilityTable:
+            print(str(i) + "." , reachableNode , "-" , self.reachabilityTable[reachableNode])
+            i = i + 1
+
 
 
 
@@ -344,12 +414,16 @@ class NodeUDP(Node):
                 if intAnswer == 1:
                     self.updateDistance()
                 elif intAnswer == 2:
-                    # Hay que avisarle a los vecinos
-                    self.alive = False
+                    self.sendData()
                 elif intAnswer == 3:
-                    self.enlitsReachabilityTable()
-                elif intAnswer == 4:
+                    # Hay que avisarle a los vecinos
                     self.kill()
+                elif intAnswer == 4:
+                    self.enlitsReachabilityTableExtended()
+                elif intAnswer == 5:
+                    self.enlistNeighboursExtended()
+                elif intAnswer == 6:
+                    self.alive = False
                 else:
                     print(self.warningMessage + answer + self.invalidOptionMessage)
             except:
