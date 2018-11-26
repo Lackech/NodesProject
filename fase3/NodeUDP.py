@@ -90,11 +90,8 @@ class NodeUDP(Node):
 
             if decrytedMessage[TYPE] == ACTUALIZATION:
                 try:
-                    print("analyze message", 1)
                     self.lockReach.acquire()
-                    print("analyze message", 2)
                     self.lockNeighbor.acquire()
-                    print("analyze message", 3)
 
                     for i in range(0, decrytedMessage[N_ACT]):
                         # Guardamos el nodo en la tabla de alcanzabilidad
@@ -104,11 +101,8 @@ class NodeUDP(Node):
                                 clientAddress[IP],clientAddress[PORT])
 
                 finally:
-                    print("analyze message", 4)
                     self.lockNeighbor.release()
-                    print("analyze message", 5)
                     self.lockReach.release()
-                    print("analyze message", 6)
 
 
             elif decrytedMessage[TYPE] == ALIVE or decrytedMessage[TYPE] == YES_ALIVE:
@@ -135,19 +129,21 @@ class NodeUDP(Node):
 
 
             elif decrytedMessage[TYPE] == COST:
-                print(COST)
                 # Vemos si el costo es menor o no, pues depende de esto si hacemos flooding o no
                 if decrytedMessage[PRICE] < self.neighborTable[clientAddress][1]:
                     # El costo es menor por lo tanto no hay problema
                     self.neighborTable[clientAddress] = (
                         self.neighborTable[clientAddress][0], decrytedMessage[PRICE], True)
+
+                    # Lo cambiamos en la tabla de alcanzabilidad
+                    reachabilityKey = (clientAddress[IP],clientAddress[PORT],self.neighborTable[clientAddress][0])
+                    self.reachabilityTable[reachabilityKey] = (decrytedMessage[PRICE],clientAddress[IP],clientAddress[PORT])
                 else:
                     # EL costo es mayor por lo tanto tenemos que realizar inundación
                     pass
 
 
             elif decrytedMessage[TYPE] == DEATH:
-                print(DEATH)
                 # Hacemos que el vecino este en modo muerto
                 self.neighborTable[clientAddress] = (
                     self.neighborTable[clientAddress][0], self.neighborTable[clientAddress][1], False)
@@ -218,11 +214,8 @@ class NodeUDP(Node):
             # Verificamos que el nodo siga vivo
             if self.alive:
                 try:
-                    print("send reachability table", 1)
-                    self.lockNeighbor.acquire()
-                    print("send reachability table", 2)
                     self.lockReach.acquire()
-                    print("send reachability table", 3)
+                    self.lockNeighbor.acquire()
 
                     for neighbourAddress in self.neighborTable:
                         # Este loop se encarga de meter lo que hay en la tabla de alcanzabilidad
@@ -235,11 +228,8 @@ class NodeUDP(Node):
 
                         list = []
                 finally:
-                    print("send reachability table", 4)
                     self.lockNeighbor.release()
-                    print("send reachability table", 5)
                     self.lockReach.release()
-                    print("send reachability table", 6)
 
 
 
@@ -248,11 +238,8 @@ class NodeUDP(Node):
     # Se encarga de actualizar una distancia en la lista de los vecinos
     def updateDistance(self):
         try:
-            print("update distance", 1)
-            self.lockNeighbor.acquire()
-            print("update distance", 2)
             self.lockReach.acquire()
-            print("update distance", 3)
+            self.lockNeighbor.acquire()
 
             self.enlistNeighbours()
             answer = input(self.neighborOptionMessage)
@@ -288,11 +275,8 @@ class NodeUDP(Node):
         except:
             pass
         finally:
-            print("update distance", 4)
             self.lockNeighbor.release()
-            print("update distance", 5)
             self.lockReach.release()
-            print("update distance", 6)
 
 
 
@@ -333,9 +317,7 @@ class NodeUDP(Node):
     def enlitsReachabilityTable(self):
         i = 1
         try:
-            print("enlist reachability table", 1)
             self.lockReach.acquire()
-            print("enlist reachability table", 2)
 
             for reachableNode in self.reachabilityTable:
                 print(str(i) + ". (" + reachableNode[0] + " , " + str(reachableNode[1]) + "," + str(
@@ -346,9 +328,7 @@ class NodeUDP(Node):
 
 
         finally:
-            print("enlist reachability table", 3)
             self.lockReach.release()
-            print("enlist reachability table", 4)
 
 
 
