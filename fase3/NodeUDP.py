@@ -129,10 +129,20 @@ class NodeUDP(Node):
 
 
             elif decrytedMessage[TYPE] == DATA:
+                # Preguntamos por el destino del paquete
                 if self.address[IP] == decrytedMessage[DESTINY_IP] and self.address[PORT] == decrytedMessage[DESTINY_PORT]:
+                    # El paquete es para este nodo
                     print(self.recievedMessageMessage + decrytedMessage[MESSAGE])
                 else:
-                    pass
+                    # El paquete debe seguir su trayectoria
+                    encryptedPacket = self.bitnator.encryptDataPacket((decrytedMessage[ORIGIN_IP],decrytedMessage[ORIGIN_PORT]),(decrytedMessage[DESTINY_IP],decrytedMessage[DESTINY_PORT]),decrytedMessage[N_DATA],decrytedMessage[MESSAGE])
+
+                    # Obtenemos el vecino por el que se llega a ese nodo
+                    reachableNodeKey = (decrytedMessage[DESTINY_IP],decrytedMessage[DESTINY_PORT])
+                    routeNeighbour = (self.reachabilityTable[reachableNodeKey][2],
+                                      self.reachabilityTable[reachableNodeKey][3])
+
+                    self.send(routeNeighbour,encryptedPacket)
 
 
             elif decrytedMessage[TYPE] == COST:
