@@ -157,14 +157,14 @@ class Bitnator:
 
 
     # Encripción de paquetes de costo
-    def encryptCostPacket(self,type,cost):
+    def encryptCostPacket(self,cost):
         encryptedPacket = bytearray()
 
         # Encriptamos el tipo
         encryptedPacket += COST.to_bytes(1, 'big')
 
         # Encriptamos el costo
-        encryptedPacket += cost.to_bytes(1, 'big')
+        encryptedPacket += cost.to_bytes(3, 'big')
 
         return encryptedPacket
 
