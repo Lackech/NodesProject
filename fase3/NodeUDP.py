@@ -198,8 +198,25 @@ class NodeUDP(Node):
 
 
 
+    def sendFlooding(self, hops):
+
+        if hops - 1 > 0:
+            next_hops = hops - 1
+
+            for vecino in self.neighborTable.keys():
+                encryptedPaket = self.bitnator.encryptTypePacket(FLOODING, next_hops)
+                self.send((vecino[0],vecino[1]), encryptedPaket)
 
 
+    def resetTable(self):
+
+        del self.reachabilityTable
+        self.reachabilityTable = {}
+        # Agrego a los vecinos
+
+        for neighborKey, neighborValue in self.neighborTable.items():
+            if neighborValue[DESPIERTO]:
+                self.reachabilityTable[neighborKey] = ()
 
     # Método para borrar un nodo
     def kill(self):

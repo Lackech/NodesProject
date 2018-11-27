@@ -64,6 +64,7 @@ class Node:
         # Booleano que nos permite saber sí el nodo sigue vivo
         self.alive = True
 
+
         # Variabes que sirven para comunicarse con el usuario
         self.ipMessage = "\tWrite the Node's Ip: "
         self.portMessage = "\tWrite Node's Port: "
