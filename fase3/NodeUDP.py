@@ -215,8 +215,8 @@ class NodeUDP(Node):
         # Agrego a los vecinos
 
         for neighborKey, neighborValue in self.neighborTable.items():
-            if neighborValue[DESPIERTO]:
-                self.reachabilityTable[neighborKey] = ()
+            if neighborValue[POS_DESPIERTO_VEC]:
+                self.reachabilityTable[neighborKey] = (neighborValue)
 
     # Método para borrar un nodo
     def kill(self):

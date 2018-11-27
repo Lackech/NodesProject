@@ -47,6 +47,15 @@ MESSAGE = 6
 # -----COSTO----- #
 PRICE = 1
 
+
+# -----Vecinos------#
+POS_IP_VEC = 0
+POS_PORT_VEC = 1
+
+POS_MASCARA_VEC = 0
+POS_COSTO_VEC = 1
+POS_DESPIERTO_VEC = 2
+
 class Node:
 
     # Contructor con parámetros
