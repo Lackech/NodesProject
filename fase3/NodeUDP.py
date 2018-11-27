@@ -125,8 +125,14 @@ class NodeUDP(Node):
 
 
             elif decrytedMessage[TYPE] == FLOODING:
-                pass
+                #Se nesecita esperar a que termine cualquier actualizacion y luego bloquear las entrantes
+                self.lockNeighbor.acquire()
+                self.lockReach.acquire()
+                self.resetTable()
+                self.lockReach.release()
+                self.lockNeighbor.release()
 
+                self.sendFlooding(HOPS)
 
             elif decrytedMessage[TYPE] == DATA:
                 # Preguntamos por el destino del paquete
@@ -155,8 +161,14 @@ class NodeUDP(Node):
                     # Lo cambiamos en la tabla de alcanzabilidad
                     self.reachabilityTable[clientAddress] = (decrytedMessage[PRICE],self.neighborTable[clientAddress][0],clientAddress[IP],clientAddress[PORT])
                 else:
-                    # EL costo es mayor por lo tanto tenemos que realizar inundación
-                    pass
+                    # EL costo es mayor por lo tanto tenemos que realizar inundación #REvisar
+                    self.lockNeighbor.acquire()
+                    self.lockReach.acquire()
+                    self.resetTable()
+                    self.lockReach.release()
+                    self.lockNeighbor.release()
+
+                    self.sendFlooding(HOPS)
 
 
             elif decrytedMessage[TYPE] == DEATH:
@@ -167,8 +179,14 @@ class NodeUDP(Node):
                 # Lo eliminamos de la tabla de alcanzabilidad
                 self.reachabilityTable.pop(clientAddress)
 
-                # Realizamos la inundación
-                pass
+                # Realizamos la inundación #Revisar
+                self.lockNeighbor.acquire()
+                self.lockReach.acquire()
+                self.resetTable()
+                self.lockReach.release()
+                self.lockNeighbor.release()
+
+                self.sendFlooding(HOPS)
 
 
             elif decrytedMessage[TYPE] == DISPATCHER:

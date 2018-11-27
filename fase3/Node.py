@@ -33,8 +33,8 @@ REACHEABILITY_TABLE = 2
 
 # -----INUNDACION----- #
 
-JUMPS = 1
-
+JUMPS = 1 #Posicion en el paquete
+HOPS = 15
 # -----DATOS----- #
 
 ORIGIN_IP = 1
