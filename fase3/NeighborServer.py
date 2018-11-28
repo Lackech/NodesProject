@@ -18,8 +18,6 @@ class NeighborServer(Node):
         self.socketServer.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.socketServer.bind(self.address)
 
-        self.uploadNeighborsTable("vecinos.csv")
-
 
         self.listener = threading.Thread(name='vecinillos', target=self.findNodeNeighbors)
         self.listener.setDaemon(True)
