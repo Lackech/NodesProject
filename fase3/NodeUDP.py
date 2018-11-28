@@ -43,7 +43,7 @@ class NodeUDP(Node):
 
         self.reachableNodeOptionMessage = "Please write the number of the Node to whom you want to send a message --> "
         self.writeMessageMessage = "Please write the message you want to send to the other Node --> "
-        self.recievedMessageMessage = "You recieved the following message --> "
+        self.recievedMessageMessage = "\n\nYou recieved the following message --> "
 
         # Creamos el socket servido del nodo
         self.socketServer = socket(AF_INET, SOCK_DGRAM)
@@ -150,7 +150,7 @@ class NodeUDP(Node):
                 # Preguntamos por el destino del paquete
                 if self.address[IP] == decrytedMessage[DESTINY_IP] and self.address[PORT] == decrytedMessage[DESTINY_PORT]:
                     # El paquete es para este nodo
-                    print(self.recievedMessageMessage + decrytedMessage[MESSAGE])
+                    print(self.recievedMessageMessage + decrytedMessage[MESSAGE] + '\n')
                 else:
                     # El paquete debe seguir su trayectoria
                     encryptedPacket = self.bitnator.encryptDataPacket((decrytedMessage[ORIGIN_IP],decrytedMessage[ORIGIN_PORT]),(decrytedMessage[DESTINY_IP],decrytedMessage[DESTINY_PORT]),decrytedMessage[N_DATA],decrytedMessage[MESSAGE])
