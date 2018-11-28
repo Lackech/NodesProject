@@ -23,11 +23,13 @@ class NodeUDP(Node):
 
         # Booleano con el que se decide si accepto o no actualizaciones
         self.acceptActualizations = True
+        self.firstTime = True
 
         # Tablas
         self.reachabilityTable = {}
         self.neighborTable = {}
         self.salutoTable = {}
+        self.salutoCont = {}
 
         # Variabes que sirven para comunicarse con el usuario
         self.greetingMessage = "Welcome to the Node UDP...\n\n"
@@ -57,6 +59,11 @@ class NodeUDP(Node):
         self.listener.setDaemon(True)
         self.listener.start()
 
+        sleep(1)
+
+        thread_hello = threading.Thread(name='Saludador', target=self.helloThere)
+        thread_hello.daemon = True
+        thread_hello.start()
 
 
         self.listener = threading.Thread(name='daemon', target=self.analyzeMessage)
@@ -69,11 +76,7 @@ class NodeUDP(Node):
         thread.setDaemon(True)
         thread.start()
 
-        sleep(1)
 
-        thread_hello = threading.Thread(name='Saludador', target=self.helloThere)
-        thread_hello.daemon = True
-        thread_hello.start()
 
         self.nodeUDPMenu()
 
@@ -84,6 +87,8 @@ class NodeUDP(Node):
     # Metodo que se encarga de recibir todos los mensajes que le llegan al nodo
     def listen(self):
         self.send(NEIGHBOR_SERVER_ADDRESS,self.bitnator.encryptTypePacket(SERVER))
+
+
 
         while self.alive:
             # Recibimos el paquete
@@ -113,6 +118,9 @@ class NodeUDP(Node):
                 thread_saluto.start()
             self.lockNeighbor.release()
             sleep(TIMEOUT_SALUTO)
+
+
+
 
 
 
@@ -179,14 +187,15 @@ class NodeUDP(Node):
                 self.reachabilityTable[clientAddress] = (
                     self.neighborTable[clientAddress][1], self.neighborTable[clientAddress][0], clientAddress[IP], clientAddress[PORT])
 
-                self.lockSaluto.acquire()
-                self.salutoTable[clientAddress] = True
-                self.lockSaluto.release()
-
                 if decrytedMessage[TYPE] == ALIVE:
                     # Le contestamos al nodo que nos envío el paquete con una confirmación
                     encryptedPaket = self.bitnator.encryptTypePacket(YES_ALIVE)
                     self.send(clientAddress, encryptedPaket)
+                else:
+                    self.lockSaluto.acquire()
+                    self.salutoTable[clientAddress] = True
+                    self.lockSaluto.release()
+
 
 
             elif decrytedMessage[TYPE] == FLOODING:
@@ -279,6 +288,11 @@ class NodeUDP(Node):
                     # Preguntamos sí el vecino está vivo
                     encryptedPacket = self.bitnator.encryptTypePacket(ALIVE)
                     self.send(decrytedMessage[REACHEABILITY_TABLE][i][0:2],encryptedPacket)
+
+                for neighborKey, neighborValue in self.neighborTable.items():
+                    self.lockSaluto.acquire()
+                    self.salutoCont[neighborKey] = 5
+                    self.lockSaluto.release()
 
 
 
