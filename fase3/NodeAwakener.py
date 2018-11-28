@@ -82,6 +82,10 @@ class NodeAwakener(Node):
                 # Creamos el nodo
                 system("start python createNodeUDP.py " + nodeAddress[0] + " " + str(nodeAddress[1]) + " " + str(nodeMascara))
 
+                # Creamos la bitacora para el nodo
+                self.createLog()
+
+
                 # Verificamos si el nodo se creó correctamente
                 success = self.verifyExistence(nodeAddress)
             else:
@@ -172,3 +176,9 @@ class NodeAwakener(Node):
                     print(self.warningMessage + answer + self.invalidOptionMessage)
             except:
                 print(self.warningMessage + answer + self.invalidOptionMessage)
+
+
+    def createLog(self):
+        file = open("log.txt","w+")
+        file.write("IP_ORIGEN,PUERTO_ORIGEN,ACCION\n")
+        file.close()

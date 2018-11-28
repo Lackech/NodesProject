@@ -57,7 +57,7 @@ POS_COSTO_VEC = 1
 POS_DESPIERTO_VEC = 2
 
 #-----Timeout---------#
-TIMEOUT_SALUTO = 45
+TIMEOUT_SALUTO = 60
 
 class Node:
 

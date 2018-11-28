@@ -593,3 +593,11 @@ class NodeUDP(Node):
                     print(self.warningMessage + answer + self.invalidOptionMessage)
             except:
                 pass
+
+
+    def writeLog(self,IP_ORIGEN,PUERTO_ORIGEN,ACCION, lock):
+        lock.acquire()
+        file = open("log.txt","a+")
+        file.write(str(IP_ORIGEN) + "--" + str(PUERTO_ORIGEN) + "--" + str(ACCION) + "\n")
+        file.close()
+        lock.release()
