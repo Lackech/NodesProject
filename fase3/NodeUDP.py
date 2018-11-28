@@ -129,7 +129,6 @@ class NodeUDP(Node):
                 sleep(0.5)
 
         if self.salutoTable[neighborKey] is False and self.neighborTable[neighborKey][POS_DESPIERTO_VEC]:
-            print("Catastrofe!!!!")
             self.lockReach.acquire()
             self.lockNeighbor.acquire()
             # Guardar primero que el vecino no esta activo en la tabla de vecinos
@@ -165,7 +164,6 @@ class NodeUDP(Node):
                         for i in range(0, decrytedMessage[N_ACT]):
                             # Guardamos el nodo en la tabla de alcanzabilidad
                             if self.reachabilityTable.get(decrytedMessage[REACHEABILITY_TABLE][i][0:2]) is None or self.reachabilityTable[decrytedMessage[REACHEABILITY_TABLE][i][0:2]][0] > decrytedMessage[REACHEABILITY_TABLE][i][3] + self.neighborTable[clientAddress][1]:
-                                #print("Despues del if")
                                 self.writeLog("(" + str(self.address[0]) + "," + str(self.address[1])+")", "(" + str(clientAddress[0]) + "," + str(clientAddress[1]) + ")", "Actualizacion que cambia costo recibida.",self.lockLog)
 
                                 self.reachabilityTable[decrytedMessage[REACHEABILITY_TABLE][i][0:2]] = (
