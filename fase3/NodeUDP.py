@@ -201,15 +201,19 @@ class NodeUDP(Node):
 
 
             elif decrytedMessage[TYPE] == FLOODING:
-                # Comenzamos con el proceso de estabilizacion
-                stabilizationCounter = (self.getFirstAliveNode(),0)
 
-                #Se nesecita esperar a que termine cualquier actualizacion y luego bloquear las entrantes
-                self.lockNeighbor.acquire()
-                self.lockReach.acquire()
-                self.resetTable()
-                self.lockReach.release()
-                self.lockNeighbor.release()
+                # Solo reseteamos la tabla si ya el contador de estabilizacion esta avanzado
+                if stabilizationCounter == 0 or stabilizationCounter[1] >= 2:
+                    #Se nesecita esperar a que termine cualquier actualizacion y luego bloquear las entrantes
+                    self.lockNeighbor.acquire()
+                    self.lockReach.acquire()
+                    self.resetTable()
+                    self.lockReach.release()
+                    self.lockNeighbor.release()
+
+                # Comenzamos con el proceso de estabilizacion
+                stabilizationCounter = (self.getFirstAliveNode(), 0)
+
                 self.writeLog("(" + str(self.address[0]) + "," + str(self.address[1]) + ")",
                               "(" + str(clientAddress[0]) + "," + str(clientAddress[1]) + ")",
                               "Llegó mensaje de inundación.", self.lockLog)
@@ -248,17 +252,22 @@ class NodeUDP(Node):
                     # Lo cambiamos en la tabla de alcanzabilidad
                     self.reachabilityTable[clientAddress] = (decrytedMessage[PRICE],self.neighborTable[clientAddress][0],clientAddress[IP],clientAddress[PORT])
                 else:
-                    # Comenzamos con el proceso de estabilizacion
-                    stabilizationCounter = (self.getFirstAliveNode(), 0)
+                    # El costo es mayor por lo tanto tenemos que realizar inundación
 
                     self.neighborTable[clientAddress] = (
                         self.neighborTable[clientAddress][0], decrytedMessage[PRICE], True)
-                    # EL costo es mayor por lo tanto tenemos que realizar inundación #REvisar
-                    self.lockNeighbor.acquire()
-                    self.lockReach.acquire()
-                    self.resetTable()
-                    self.lockReach.release()
-                    self.lockNeighbor.release()
+
+                    # Solo reseteamos la tabla si ya el contador de estabilizacion esta avanzado
+                    if stabilizationCounter == 0 or stabilizationCounter[1] >= 2:
+                        self.lockNeighbor.acquire()
+                        self.lockReach.acquire()
+                        self.resetTable()
+                        self.lockReach.release()
+                        self.lockNeighbor.release()
+
+                    # Comenzamos con el proceso de estabilizacion
+                    stabilizationCounter = (self.getFirstAliveNode(), 0)
+
 
                     self.writeLog("(" + str(self.address[0]) + "," + str(self.address[1]) + ")",
                                   "(" + str(clientAddress[0]) + "," + str(clientAddress[1]) + ")",
