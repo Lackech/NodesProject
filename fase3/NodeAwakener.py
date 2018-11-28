@@ -180,5 +180,5 @@ class NodeAwakener(Node):
 
     def createLog(self):
         file = open("log.txt","w+")
-        file.write("IP_ORIGEN,PUERTO_ORIGEN,ACCION\n")
+        file.write("DESTINO,ORIGEN,ACCION\n")
         file.close()

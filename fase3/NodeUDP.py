@@ -166,6 +166,7 @@ class NodeUDP(Node):
                             # Guardamos el nodo en la tabla de alcanzabilidad
                             if self.reachabilityTable.get(decrytedMessage[REACHEABILITY_TABLE][i][0:2]) is None or self.reachabilityTable[decrytedMessage[REACHEABILITY_TABLE][i][0:2]][0] > decrytedMessage[REACHEABILITY_TABLE][i][3] + self.neighborTable[clientAddress][1]:
                                 #print("Despues del if")
+                                self.writeLog("(" + str(self.address[0]) + "," + str(self.address[1])+")", "(" + str(clientAddress[0]) + "," + str(clientAddress[1]) + ")", "Actualizacion que cambia costo recibida.",self.lockLog)
 
                                 self.reachabilityTable[decrytedMessage[REACHEABILITY_TABLE][i][0:2]] = (
                                     decrytedMessage[REACHEABILITY_TABLE][i][3] + self.neighborTable[clientAddress][1],
@@ -211,13 +212,18 @@ class NodeUDP(Node):
                 self.resetTable()
                 self.lockReach.release()
                 self.lockNeighbor.release()
-
+                self.writeLog("(" + str(self.address[0]) + "," + str(self.address[1]) + ")",
+                              "(" + str(clientAddress[0]) + "," + str(clientAddress[1]) + ")",
+                              "Llegó mensaje de inundación.", self.lockLog)
                 self.sendFlooding(decrytedMessage[JUMPS])
 
             elif decrytedMessage[TYPE] == DATA:
                 # Preguntamos por el destino del paquete
                 if self.address[IP] == decrytedMessage[DESTINY_IP] and self.address[PORT] == decrytedMessage[DESTINY_PORT]:
                     # El paquete es para este nodo
+                    self.writeLog("(" + str(self.address[0]) + "," + str(self.address[1]) + ")",
+                                  "(" + str(clientAddress[0]) + "," + str(clientAddress[1]) + ")",
+                                  "Se ha recibido un mensaje: " + self.recievedMessageMessage + decrytedMessage[MESSAGE], self.lockLog)
                     print(self.recievedMessageMessage + decrytedMessage[MESSAGE] + '\n')
                 else:
                     # El paquete debe seguir su trayectoria
@@ -238,6 +244,9 @@ class NodeUDP(Node):
                     self.neighborTable[clientAddress] = (
                         self.neighborTable[clientAddress][0], decrytedMessage[PRICE], True)
 
+                    self.writeLog("(" + str(self.address[0]) + "," + str(self.address[1]) + ")",
+                                  "(" + str(clientAddress[0]) + "," + str(clientAddress[1]) + ")",
+                                  "Llegó cambio de costo local.", self.lockLog)
                     # Lo cambiamos en la tabla de alcanzabilidad
                     self.reachabilityTable[clientAddress] = (decrytedMessage[PRICE],self.neighborTable[clientAddress][0],clientAddress[IP],clientAddress[PORT])
                 else:
@@ -252,6 +261,10 @@ class NodeUDP(Node):
                     self.resetTable()
                     self.lockReach.release()
                     self.lockNeighbor.release()
+
+                    self.writeLog("(" + str(self.address[0]) + "," + str(self.address[1]) + ")",
+                                  "(" + str(clientAddress[0]) + "," + str(clientAddress[1]) + ")",
+                                  "Cambio de costo hacia arriba. Inicia inundación.", self.lockLog)
 
                     self.sendFlooding(HOPS)
 
@@ -274,6 +287,9 @@ class NodeUDP(Node):
                 self.lockReach.release()
                 self.lockNeighbor.release()
 
+                self.writeLog("(" + str(self.address[0]) + "," + str(self.address[1]) + ")",
+                              "(" + str(clientAddress[0]) + "," + str(clientAddress[1]) + ")",
+                              "El nodo se ha suicidado. Inicia inundación.", self.lockLog)
                 self.sendFlooding(HOPS)
 
 
@@ -341,6 +357,7 @@ class NodeUDP(Node):
 
     # Método para borrar un nodo
     def kill(self):
+
         # Enviamos el mensaje a los nodos vecinos
         for neighbour in self.neighborTable:
             if self.neighborTable[neighbour][2] == True:
@@ -594,6 +611,6 @@ class NodeUDP(Node):
     def writeLog(self,IP_ORIGEN,PUERTO_ORIGEN,ACCION, lock):
         lock.acquire()
         file = open("log.txt","a+")
-        file.write(str(IP_ORIGEN) + "--" + str(PUERTO_ORIGEN) + "--" + str(ACCION) + "\n")
+        file.write(str(IP_ORIGEN) + "," + str(PUERTO_ORIGEN) + "," + str(ACCION) + "\n")
         file.close()
         lock.release()

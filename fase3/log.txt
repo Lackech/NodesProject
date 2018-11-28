@@ -1,0 +1,17 @@
+DESTINO,ORIGEN,ACCION
+(127.0.0.1,30000),(127.0.0.1,15000),Actualizacion que cambia costo recibida.
+(127.0.0.1,5000),(127.0.0.1,10000),Actualizacion que cambia costo recibida.
+(127.0.0.1,15000),(127.0.0.1,10000),Actualizacion que cambia costo recibida.
+(127.0.0.1,5000),(127.0.0.1,10000),Actualizacion que cambia costo recibida.
+(127.0.0.1,30000),(127.0.0.1,15000),Actualizacion que cambia costo recibida.
+(127.0.0.1,30000),(127.0.0.1,15000),Se ha recibido un mensaje: 
+
+You recieved the following message --> Hello
+(127.0.0.1,5000),(127.0.0.1,10000),Llegó cambio de costo local.
+(127.0.0.1,15000),(127.0.0.1,10000),Actualizacion que cambia costo recibida.
+(127.0.0.1,5000),(127.0.0.1,10000),Actualizacion que cambia costo recibida.
+(127.0.0.1,5000),(127.0.0.1,10000),Actualizacion que cambia costo recibida.
+(127.0.0.1,30000),(127.0.0.1,15000),Actualizacion que cambia costo recibida.
+(127.0.0.1,15000),(127.0.0.1,10000),El nodo se ha suicidado. Inicia inundación.
+(127.0.0.1,30000),(127.0.0.1,15000),Llegó mensaje de inundación.
+(127.0.0.1,15000),(127.0.0.1,30000),Llegó mensaje de inundación.
