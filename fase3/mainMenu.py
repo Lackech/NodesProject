@@ -2,12 +2,12 @@ from fase3.NodeAwakener import *
 from fase3.NeighborServer import  *
 
 if __name__ == '__main__':
-    answer = 0
+    intAnswer = 0
     server = NeighborServer()
     nodeAwakener = NodeAwakener()
 
     print("Welcome to our nodes creator!!")
-    while answer != 4:
+    while intAnswer != 4:
         answer = input("Choose one of the following options:\n"
               "\t1. Load predefined \"csv\" files\n"
               "\t2. Load the \"csv\" files of your choice\n"

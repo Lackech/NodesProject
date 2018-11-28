@@ -21,9 +21,6 @@ class NodeUDP(Node):
         self.waitingQueue = queue.Queue(1)
         self.packetsQueue = queue.Queue(MAX_SIZE)
 
-        # Booleano con el que se decide si accepto o no actualizaciones
-        self.acceptActualizations = True
-
         # Tablas
         self.reachabilityTable = {}
         self.neighborTable = {}
@@ -103,7 +100,7 @@ class NodeUDP(Node):
     def helloThere(self):
         while self.alive is True:
             self.lockNeighbor.acquire()
-            print("Saludando vecinos")
+
             for neighborKey, neighborValue in self.neighborTable.items():
                 self.lockSaluto.acquire()
                 self.salutoTable[neighborKey] = False
@@ -144,30 +141,37 @@ class NodeUDP(Node):
 
     # Se encarga de analizar los paquetes que solo tienen un dato
     def analyzeMessage(self):
+        stabilizationCounter = 0
+
         while self.alive:
             information = self.packetsQueue.get()
             decrytedMessage = information[0]
             clientAddress = information[1]
 
-            if decrytedMessage[TYPE] == ACTUALIZATION and self.acceptActualizations == True:
-                try:
-                    self.lockReach.acquire()
-                    self.lockNeighbor.acquire()
-                    #print(decrytedMessage)
+            if decrytedMessage[TYPE] == ACTUALIZATION:
 
-                    for i in range(0, decrytedMessage[N_ACT]):
-                        # Guardamos el nodo en la tabla de alcanzabilidad
-                        #print("Antes del if")
-                        if self.reachabilityTable.get(decrytedMessage[REACHEABILITY_TABLE][i][0:2]) is None or self.reachabilityTable[decrytedMessage[REACHEABILITY_TABLE][i][0:2]][0] > decrytedMessage[REACHEABILITY_TABLE][i][3] + self.neighborTable[clientAddress][1]:
-                            #print("Despues del if")
+                if stabilizationCounter == 0 or stabilizationCounter[1] == 3:
+                    try:
+                        self.lockReach.acquire()
+                        self.lockNeighbor.acquire()
 
-                            self.reachabilityTable[decrytedMessage[REACHEABILITY_TABLE][i][0:2]] = (
-                                decrytedMessage[REACHEABILITY_TABLE][i][3] + self.neighborTable[clientAddress][1],
-                                decrytedMessage[REACHEABILITY_TABLE][i][2],clientAddress[IP],clientAddress[PORT])
+                        for i in range(0, decrytedMessage[N_ACT]):
+                            # Guardamos el nodo en la tabla de alcanzabilidad
+                            if self.reachabilityTable.get(decrytedMessage[REACHEABILITY_TABLE][i][0:2]) is None or self.reachabilityTable[decrytedMessage[REACHEABILITY_TABLE][i][0:2]][0] > decrytedMessage[REACHEABILITY_TABLE][i][3] + self.neighborTable[clientAddress][1]:
+                                #print("Despues del if")
 
-                finally:
-                    self.lockNeighbor.release()
-                    self.lockReach.release()
+                                self.reachabilityTable[decrytedMessage[REACHEABILITY_TABLE][i][0:2]] = (
+                                    decrytedMessage[REACHEABILITY_TABLE][i][3] + self.neighborTable[clientAddress][1],
+                                    decrytedMessage[REACHEABILITY_TABLE][i][2],clientAddress[IP],clientAddress[PORT])
+
+                    finally:
+                        stabilizationCounter = 0
+                        self.lockNeighbor.release()
+                        self.lockReach.release()
+
+                elif stabilizationCounter != 0:
+                    if stabilizationCounter[0] == clientAddress:
+                        stabilizationCounter = (clientAddress,stabilizationCounter[1]+1)
 
 
             elif decrytedMessage[TYPE] == ALIVE or decrytedMessage[TYPE] == YES_ALIVE:
@@ -190,8 +194,8 @@ class NodeUDP(Node):
 
 
             elif decrytedMessage[TYPE] == FLOODING:
-                # Despertamos el hilo que desactiva las actualizaciones
-                self.wakeStabilizationThread()
+                # Comenzamos con el proceso de estabilizacion
+                stabilizationCounter = (self.getFirstAliveNode(),0)
 
                 #Se nesecita esperar a que termine cualquier actualizacion y luego bloquear las entrantes
                 self.lockNeighbor.acquire()
@@ -229,8 +233,8 @@ class NodeUDP(Node):
                     # Lo cambiamos en la tabla de alcanzabilidad
                     self.reachabilityTable[clientAddress] = (decrytedMessage[PRICE],self.neighborTable[clientAddress][0],clientAddress[IP],clientAddress[PORT])
                 else:
-                    # Despertamos el hilo que desactiva las actualizaciones
-                    self.wakeStabilizationThread()
+                    # Comenzamos con el proceso de estabilizacion
+                    stabilizationCounter = (self.getFirstAliveNode(), 0)
 
                     self.neighborTable[clientAddress] = (
                         self.neighborTable[clientAddress][0], decrytedMessage[PRICE], True)
@@ -245,12 +249,12 @@ class NodeUDP(Node):
 
 
             elif decrytedMessage[TYPE] == DEATH:
-                # Despertamos el hilo que desactiva las actualizaciones
-                self.wakeStabilizationThread()
-
                 # Hacemos que el vecino este en modo muerto
                 self.neighborTable[clientAddress] = (
                     self.neighborTable[clientAddress][0], self.neighborTable[clientAddress][1], False)
+
+                # Comenzamos con el proceso de estabilizacion
+                stabilizationCounter = (self.getFirstAliveNode(), 0)
 
                 # Lo eliminamos de la tabla de alcanzabilidad
                 self.reachabilityTable.pop(clientAddress)
@@ -507,6 +511,19 @@ class NodeUDP(Node):
             if self.neighborTable[neighbour][2] == True:
                 print(str(i) + ".", neighbour,"-",self.neighborTable[neighbour])
             i = i + 1
+
+
+
+
+
+    # Me devulve el primer nodo que este vivo en la tabla de vecinos
+    def getFirstAliveNode(self):
+        neighbourInformation = 0
+        for neighbour in self.neighborTable:
+            if self.neighborTable[neighbour][2] == True:
+                neighbourInformation = neighbour
+
+        return neighbourInformation
 
 
 
