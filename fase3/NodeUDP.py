@@ -1,6 +1,7 @@
 from socket import *
 from fase3.Node import *
 import queue
+import time
 
 MAX_SIZE = 10
 
@@ -17,6 +18,9 @@ class NodeUDP(Node):
 
         self.waitingQueue = queue.Queue(1)
         self.packetsQueue = queue.Queue(MAX_SIZE)
+
+        # Booleano con el que se decide si accepto o no actualizaciones
+        self.acceptActualizations = True
 
         # Tablas
         self.reachabilityTable = {}
@@ -93,7 +97,7 @@ class NodeUDP(Node):
             decrytedMessage = information[0]
             clientAddress = information[1]
 
-            if decrytedMessage[TYPE] == ACTUALIZATION:
+            if decrytedMessage[TYPE] == ACTUALIZATION and self.acceptActualizations == True:
                 try:
                     self.lockReach.acquire()
                     self.lockNeighbor.acquire()
@@ -130,6 +134,9 @@ class NodeUDP(Node):
 
 
             elif decrytedMessage[TYPE] == FLOODING:
+                # Despertamos el hilo que desactiva las actualizaciones
+                self.wakeStabilizationThread()
+
                 #Se nesecita esperar a que termine cualquier actualizacion y luego bloquear las entrantes
                 self.lockNeighbor.acquire()
                 self.lockReach.acquire()
@@ -166,6 +173,9 @@ class NodeUDP(Node):
                     # Lo cambiamos en la tabla de alcanzabilidad
                     self.reachabilityTable[clientAddress] = (decrytedMessage[PRICE],self.neighborTable[clientAddress][0],clientAddress[IP],clientAddress[PORT])
                 else:
+                    # Despertamos el hilo que desactiva las actualizaciones
+                    self.wakeStabilizationThread()
+
                     self.neighborTable[clientAddress] = (
                         self.neighborTable[clientAddress][0], decrytedMessage[PRICE], True)
                     # EL costo es mayor por lo tanto tenemos que realizar inundación #REvisar
@@ -179,6 +189,9 @@ class NodeUDP(Node):
 
 
             elif decrytedMessage[TYPE] == DEATH:
+                # Despertamos el hilo que desactiva las actualizaciones
+                self.wakeStabilizationThread()
+
                 # Hacemos que el vecino este en modo muerto
                 self.neighborTable[clientAddress] = (
                     self.neighborTable[clientAddress][0], self.neighborTable[clientAddress][1], False)
@@ -223,6 +236,8 @@ class NodeUDP(Node):
 
 
 
+
+
     def sendFlooding(self, hops):
 
         if hops - 1 > 0:
@@ -231,6 +246,10 @@ class NodeUDP(Node):
             for vecino in self.neighborTable.keys():
                 encryptedPaket = self.bitnator.encryptInundationPacket(next_hops)
                 self.send((vecino[0],vecino[1]), encryptedPaket)
+
+
+
+
 
 
     def resetTable(self):
@@ -242,6 +261,10 @@ class NodeUDP(Node):
         for neighborKey, neighborValue in self.neighborTable.items():
             if neighborValue[POS_DESPIERTO_VEC]:
                 self.reachabilityTable[neighborKey] = (neighborValue[1],neighborValue[0], neighborKey[0],neighborKey[1])
+
+
+
+
 
     # Método para borrar un nodo
     def kill(self):
@@ -334,6 +357,26 @@ class NodeUDP(Node):
         finally:
             self.lockNeighbor.release()
             self.lockReach.release()
+
+
+
+
+
+    # Despierta el hilo que espera que los nodos se estabilicen
+    def wakeStabilizationThread(self):
+        stabilize = threading.Thread(name='stabilize', target=self.waitStabilization)
+        stabilize.setDaemon(True)
+        stabilize.start()
+
+
+
+
+
+    # Espera minuto y medio para poder seguir aceptando actualizaciones
+    def waitStabilization(self):
+        self.acceptActualizations = False
+        time.sleep(90)
+        self.acceptActualizations = True
 
 
 
