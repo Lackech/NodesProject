@@ -24,6 +24,7 @@ class NodeUDP(Node):
 
         # Variabes que sirven para comunicarse con el usuario
         self.greetingMessage = "Welcome to the Node UDP...\n\n"
+        self.MrMeeseeks = "Im "
         self.optionMessage = ("Please select one of the following options:\n"
                               "\t1. Change a link's distance\n"
                               "\t2. Send a message\n"
@@ -96,10 +97,14 @@ class NodeUDP(Node):
                 try:
                     self.lockReach.acquire()
                     self.lockNeighbor.acquire()
+                    #print(decrytedMessage)
 
                     for i in range(0, decrytedMessage[N_ACT]):
                         # Guardamos el nodo en la tabla de alcanzabilidad
+                        #print("Antes del if")
                         if self.reachabilityTable.get(decrytedMessage[REACHEABILITY_TABLE][i][0:2]) is None or self.reachabilityTable[decrytedMessage[REACHEABILITY_TABLE][i][0:2]][0] > decrytedMessage[REACHEABILITY_TABLE][i][3] + self.neighborTable[clientAddress][1]:
+                            #print("Despues del if")
+
                             self.reachabilityTable[decrytedMessage[REACHEABILITY_TABLE][i][0:2]] = (
                                 decrytedMessage[REACHEABILITY_TABLE][i][3] + self.neighborTable[clientAddress][1],
                                 decrytedMessage[REACHEABILITY_TABLE][i][2],clientAddress[IP],clientAddress[PORT])
@@ -132,7 +137,7 @@ class NodeUDP(Node):
                 self.lockReach.release()
                 self.lockNeighbor.release()
 
-                self.sendFlooding(HOPS)
+                self.sendFlooding(decrytedMessage[JUMPS])
 
             elif decrytedMessage[TYPE] == DATA:
                 # Preguntamos por el destino del paquete
@@ -161,6 +166,8 @@ class NodeUDP(Node):
                     # Lo cambiamos en la tabla de alcanzabilidad
                     self.reachabilityTable[clientAddress] = (decrytedMessage[PRICE],self.neighborTable[clientAddress][0],clientAddress[IP],clientAddress[PORT])
                 else:
+                    self.neighborTable[clientAddress] = (
+                        self.neighborTable[clientAddress][0], decrytedMessage[PRICE], True)
                     # EL costo es mayor por lo tanto tenemos que realizar inundación #REvisar
                     self.lockNeighbor.acquire()
                     self.lockReach.acquire()
@@ -222,7 +229,7 @@ class NodeUDP(Node):
             next_hops = hops - 1
 
             for vecino in self.neighborTable.keys():
-                encryptedPaket = self.bitnator.encryptTypePacket(FLOODING, next_hops)
+                encryptedPaket = self.bitnator.encryptInundationPacket(next_hops)
                 self.send((vecino[0],vecino[1]), encryptedPaket)
 
 
@@ -234,7 +241,7 @@ class NodeUDP(Node):
 
         for neighborKey, neighborValue in self.neighborTable.items():
             if neighborValue[POS_DESPIERTO_VEC]:
-                self.reachabilityTable[neighborKey] = (neighborValue)
+                self.reachabilityTable[neighborKey] = (neighborValue[1],neighborValue[0], neighborKey[0],neighborKey[1])
 
     # Método para borrar un nodo
     def kill(self):
@@ -302,7 +309,7 @@ class NodeUDP(Node):
                 newDistance = input(self.changeDistanceMessage)
                 intNewDistance = int(newDistance)
 
-                if intNewDistance > 20 and intNewDistance <= 100:
+                if intNewDistance >= 20 and intNewDistance <= 100:
 
                     # Cambiamos la información en la tabla de vecinos
                     self.neighborTable[neighbourInformation] = (
@@ -450,7 +457,7 @@ class NodeUDP(Node):
 
     # Menú del nodo UDP
     def nodeUDPMenu(self):
-        print(self.greetingMessage)
+        print(self.greetingMessage + "I am " ,self.address)
         while self.alive:
             try:
                 answer = input(self.optionMessage)
