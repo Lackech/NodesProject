@@ -1,6 +1,7 @@
 from socket import *
 from fase3.Node import *
 import queue
+from time import sleep
 
 MAX_SIZE = 10
 
@@ -14,6 +15,7 @@ class NodeUDP(Node):
         self.lockReach = threading.Lock()
         self.lockLog = threading.Lock()
         self.lockNeighbor = threading.Lock()
+        self.lockSaluto = threading.Lock()
 
         self.waitingQueue = queue.Queue(1)
         self.packetsQueue = queue.Queue(MAX_SIZE)
@@ -21,6 +23,7 @@ class NodeUDP(Node):
         # Tablas
         self.reachabilityTable = {}
         self.neighborTable = {}
+        self.salutoTable = {}
 
         # Variabes que sirven para comunicarse con el usuario
         self.greetingMessage = "Welcome to the Node UDP...\n\n"
@@ -50,14 +53,23 @@ class NodeUDP(Node):
         self.listener.setDaemon(True)
         self.listener.start()
 
+
+
         self.listener = threading.Thread(name='daemon', target=self.analyzeMessage)
         self.listener.setDaemon(True)
         self.listener.start()
+
 
         # Creamos el hilo que se va a encargar de enviar la tabla cada 30 segundos
         thread = threading.Thread(name='Analizador', target=self.sendReacheabilityTable)
         thread.setDaemon(True)
         thread.start()
+
+        sleep(1)
+
+        thread_hello = threading.Thread(name='Saludador', target=self.helloThere)
+        thread_hello.daemon = True
+        thread_hello.start()
 
         self.nodeUDPMenu()
 
@@ -81,6 +93,46 @@ class NodeUDP(Node):
                 pass
 
         self.socketServer.close()
+
+
+    # Metodillo para manejar catastrofes
+    def helloThere(self):
+        while self.alive is True:
+            self.lockNeighbor.acquire()
+            print("Saludando vecinos")
+            for neighborKey, neighborValue in self.neighborTable.items():
+                self.lockSaluto.acquire()
+                self.salutoTable[neighborKey] = False
+                self.lockSaluto.release()
+                thread_saluto = threading.Thread(target= self.waazzzuuuupp, args=(neighborKey,neighborValue))
+                thread_saluto.daemon = True
+                thread_saluto.start()
+            self.lockNeighbor.release()
+            sleep(TIMEOUT_SALUTO)
+
+
+
+    def waazzzuuuupp(self, neighborKey, neighborValue):
+
+        for i in range(0,5):
+            if self.salutoTable[neighborKey] is False:
+                encryptedPacket = self.bitnator.encryptTypePacket(ALIVE)
+                self.send(neighborKey, encryptedPacket)
+                sleep(0.5)
+
+        if self.salutoTable[neighborKey] is False and self.neighborTable[neighborKey][POS_DESPIERTO_VEC]:
+            print("Catastrofe!!!!")
+            self.lockReach.acquire()
+            self.lockNeighbor.acquire()
+            # Guardar primero que el vecino no esta activo en la tabla de vecinos
+            self.neighborTable[neighborKey] = (neighborValue[0],neighborValue[1],False)
+            # Resetear la tabla que se tiene y avisar a los vecinos que alguien se murio
+            self.resetTable()
+            self.sendFlooding(HOPS)
+            self.lockNeighbor.release()
+            self.lockReach.release()
+
+
 
 
 
@@ -122,6 +174,10 @@ class NodeUDP(Node):
                 # Lo guardamos en la tabla de alcanzabilidad
                 self.reachabilityTable[clientAddress] = (
                     self.neighborTable[clientAddress][1], self.neighborTable[clientAddress][0], clientAddress[IP], clientAddress[PORT])
+
+                self.lockSaluto.acquire()
+                self.salutoTable[clientAddress] = True
+                self.lockSaluto.release()
 
                 if decrytedMessage[TYPE] == ALIVE:
                     # Le contestamos al nodo que nos envío el paquete con una confirmación
