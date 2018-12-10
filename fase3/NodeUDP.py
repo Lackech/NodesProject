@@ -164,7 +164,7 @@ class NodeUDP(Node):
                         for i in range(0, decrytedMessage[N_ACT]):
                             # Guardamos el nodo en la tabla de alcanzabilidad
                             if self.reachabilityTable.get(decrytedMessage[REACHEABILITY_TABLE][i][0:2]) is None or self.reachabilityTable[decrytedMessage[REACHEABILITY_TABLE][i][0:2]][0] > decrytedMessage[REACHEABILITY_TABLE][i][3] + self.neighborTable[clientAddress][1]:
-                                self.writeLog("(" + str(self.address[0]) + "," + str(self.address[1])+")", "(" + str(clientAddress[0]) + "," + str(clientAddress[1]) + ")", "Actualizacion que cambia costo recibida.",self.lockLog)
+                                # self.writeLog("(" + str(self.address[0]) + "," + str(self.address[1])+")", "(" + str(clientAddress[0]) + "," + str(clientAddress[1]) + ")", "Actualizacion que cambia costo recibida.",self.lockLog)
 
                                 self.reachabilityTable[decrytedMessage[REACHEABILITY_TABLE][i][0:2]] = (
                                     decrytedMessage[REACHEABILITY_TABLE][i][3] + self.neighborTable[clientAddress][1],
@@ -202,6 +202,8 @@ class NodeUDP(Node):
 
             elif decrytedMessage[TYPE] == FLOODING:
 
+                print("Me llego un msj de inundacion: " , decrytedMessage);
+
                 # Solo reseteamos la tabla si ya el contador de estabilizacion esta avanzado
                 if stabilizationCounter == 0 or stabilizationCounter[1] >= 2:
                     #Se nesecita esperar a que termine cualquier actualizacion y luego bloquear las entrantes
@@ -228,6 +230,7 @@ class NodeUDP(Node):
                                   "Se ha recibido un mensaje: " + self.recievedMessageMessage + decrytedMessage[MESSAGE], self.lockLog)
                     print(self.recievedMessageMessage + decrytedMessage[MESSAGE] + '\n')
                 else:
+                    print("El paquete esta de paseo por aca: " , decrytedMessage)
                     # El paquete debe seguir su trayectoria
                     encryptedPacket = self.bitnator.encryptDataPacket((decrytedMessage[ORIGIN_IP],decrytedMessage[ORIGIN_PORT]),(decrytedMessage[DESTINY_IP],decrytedMessage[DESTINY_PORT]),decrytedMessage[N_DATA],decrytedMessage[MESSAGE])
 
@@ -429,7 +432,7 @@ class NodeUDP(Node):
                 newDistance = input(self.changeDistanceMessage)
                 intNewDistance = int(newDistance)
 
-                if intNewDistance >= 20 and intNewDistance <= 100:
+                if intNewDistance >= 0 and intNewDistance <= 100:
 
                     # Cambiamos la información en la tabla de vecinos
                     self.neighborTable[neighbourInformation] = (

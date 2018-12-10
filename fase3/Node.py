@@ -8,7 +8,7 @@ NODE_AWAKENER_ADDRESS = ('localhost',12000)
 NODE_AWAKENER_MASCARA = 2
 
 # La dirección predeterminada del nodo con la información de los vecinos
-NEIGHBOR_SERVER_ADDRESS = ('127.0.0.1',2000)
+NEIGHBOR_SERVER_ADDRESS = ('192.168.1.5',2000)
 NEIGHBOR_SERVER_MASCARA = 2
 
 # Lista con los nombres para localizar la información en el diccionario creado por el lector de archivos
@@ -34,7 +34,7 @@ REACHEABILITY_TABLE = 2
 # -----INUNDACION----- #
 
 JUMPS = 1 #Posicion en el paquete
-HOPS = 3
+HOPS = 15
 # -----DATOS----- #
 
 ORIGIN_IP = 1
