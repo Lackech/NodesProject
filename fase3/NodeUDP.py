@@ -100,6 +100,8 @@ class NodeUDP(Node):
         self.socketServer.close()
 
 
+
+
     # Metodillo para manejar catastrofes
     def helloThere(self):
         while self.alive is True:
@@ -131,8 +133,10 @@ class NodeUDP(Node):
         if self.salutoTable[neighborKey] is False and self.neighborTable[neighborKey][POS_DESPIERTO_VEC]:
             self.lockReach.acquire()
             self.lockNeighbor.acquire()
+
             # Guardar primero que el vecino no esta activo en la tabla de vecinos
             self.neighborTable[neighborKey] = (neighborValue[0],neighborValue[1],False)
+
             # Resetear la tabla que se tiene y avisar a los vecinos que alguien se murio
             self.resetTable()
             self.sendFlooding(HOPS)
@@ -202,7 +206,7 @@ class NodeUDP(Node):
 
             elif decrytedMessage[TYPE] == FLOODING:
 
-                print("Me llego un msj de inundacion: " , decrytedMessage);
+                print("\nMe llego un msj de inundacion: " , decrytedMessage)
 
                 # Solo reseteamos la tabla si ya el contador de estabilizacion esta avanzado
                 if stabilizationCounter == 0 or stabilizationCounter[1] >= 2:
@@ -230,7 +234,7 @@ class NodeUDP(Node):
                                   "Se ha recibido un mensaje: " + self.recievedMessageMessage + decrytedMessage[MESSAGE], self.lockLog)
                     print(self.recievedMessageMessage + decrytedMessage[MESSAGE] + '\n')
                 else:
-                    print("El paquete esta de paseo por aca: " , decrytedMessage)
+                    print("\nEl paquete esta de paseo por aca: " , decrytedMessage,'\n')
                     # El paquete debe seguir su trayectoria
                     encryptedPacket = self.bitnator.encryptDataPacket((decrytedMessage[ORIGIN_IP],decrytedMessage[ORIGIN_PORT]),(decrytedMessage[DESTINY_IP],decrytedMessage[DESTINY_PORT]),decrytedMessage[N_DATA],decrytedMessage[MESSAGE])
 
@@ -593,9 +597,9 @@ class NodeUDP(Node):
 
     # Menú del nodo UDP
     def nodeUDPMenu(self):
-        print(self.greetingMessage + "I am " ,self.address)
         while self.alive:
             try:
+                print("I am ", self.address)
                 answer = input(self.optionMessage)
 
                 intAnswer = int(answer)
@@ -612,8 +616,6 @@ class NodeUDP(Node):
                     self.enlistNeighboursExtended()
                 elif intAnswer == 6:
                     self.alive = False
-                else:
-                    print(self.warningMessage + answer + self.invalidOptionMessage)
             except:
                 pass
 

@@ -5,20 +5,20 @@ from socket import *
 
 # La dirección predeterminada del activador de nodos
 NODE_AWAKENER_ADDRESS = ('localhost',12000)
-NODE_AWAKENER_MASCARA = 2
+NODE_AWAKENER_MASCARA = 24
 
 # La dirección predeterminada del nodo con la información de los vecinos
-NEIGHBOR_SERVER_ADDRESS = ('192.168.1.5',2000)
-NEIGHBOR_SERVER_MASCARA = 2
+NEIGHBOR_SERVER_ADDRESS = ('localhost',2000)
+NEIGHBOR_SERVER_MASCARA = 24
 
 # Lista con los nombres para localizar la información en el diccionario creado por el lector de archivos
-NODE_IP = 'Node_ip'
-NODE_MASCARA = 'Node_mascara'
-NODE_PORT = 'Node_port'
-NEIGHBOR_IP = 'Neighbor_ip'
-NEIGHBOR_MASCARA = 'Neighbor_mascara'
-NEIGHBOR_PORT = 'Neighbor_port'
-DISTANCE = 'Distance'
+NODE_IP = 0
+NODE_MASCARA = 1
+NODE_PORT = 2
+NEIGHBOR_IP = 3
+NEIGHBOR_MASCARA = 4
+NEIGHBOR_PORT = 5
+DISTANCE = 6
 
 # Posición de cada valor en el paquete ya desencriptado, para cada uno de los diferentes tipos de paquete
 # -----GENERAL----- #

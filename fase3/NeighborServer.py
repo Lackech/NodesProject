@@ -29,24 +29,23 @@ class NeighborServer(Node):
 
 
 
-    def uploadNeighborsTable(self,file):
+    def uploadNeighborsTable(self,fileName):
         success = True
 
         try:
-            csvarchivo = open(file)
-            entrada = csv.DictReader(csvarchivo)
-            for row in entrada:
-
-                nodeAddress = (row[NODE_IP], int(row[NODE_PORT]))
-                nodeAddressValue = (row[NEIGHBOR_IP],int(row[NEIGHBOR_PORT]),int(row[NEIGHBOR_MASCARA]),int(row[DISTANCE]))
-                # Tengo que pasarlo a listas
-                listaValor = [nodeAddressValue]
-                if self.allNeighbors.get(nodeAddress) is None:
-                    self.allNeighbors[nodeAddress] = listaValor
-                else:
-                    lista = self.allNeighbors[nodeAddress]
-                    listaValor.extend(lista)
-                    self.allNeighbors[nodeAddress] = listaValor
+            with open(fileName) as csvfile:
+                reader = csv.reader(csvfile, delimiter=',')
+                for row in reader:
+                    nodeAddress = (row[NODE_IP], int(row[NODE_PORT]))
+                    nodeAddressValue = (row[NEIGHBOR_IP],int(row[NEIGHBOR_PORT]),int(row[NEIGHBOR_MASCARA]),int(row[DISTANCE]))
+                    # Tengo que pasarlo a listas
+                    listaValor = [nodeAddressValue]
+                    if self.allNeighbors.get(nodeAddress) is None:
+                        self.allNeighbors[nodeAddress] = listaValor
+                    else:
+                        lista = self.allNeighbors[nodeAddress]
+                        listaValor.extend(lista)
+                        self.allNeighbors[nodeAddress] = listaValor
 
         except:
             # Quiere decir que en el proceso hubo algún error por lo que no se puedo leer correctamente el archivo

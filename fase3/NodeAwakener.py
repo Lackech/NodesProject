@@ -50,12 +50,12 @@ class NodeAwakener(Node):
             if fileNameLength > 4:
                 # Preguntamos si los 4 caracteres finales son los que nos indican que es un archivo tipo ".csv"
                 if fileName[fileNameLength-4] == '.' and fileName[fileNameLength-3] == 'c' and fileName[fileNameLength-2] == 's' and fileName[fileNameLength-1] == 'v':
-                    csvfile = open(fileName)
-                    reader = csv.DictReader(csvfile)
-                    for row in reader:
-                        nodeAddress = (row[NODE_IP],int(row[NODE_PORT]))
-                        nodeMascara = int(row[NODE_MASCARA])
-                        success = self.awakeNode(nodeAddress,nodeMascara)
+                    with open(fileName) as csvfile:
+                        reader = csv.reader(csvfile,delimiter=',')
+                        for row in reader:
+                            nodeAddress = (row[NODE_IP],int(row[NODE_PORT]))
+                            nodeMascara = int(row[NODE_MASCARA])
+                            success = self.awakeNode(nodeAddress,nodeMascara)
                 else:
                     success = False
             else:
