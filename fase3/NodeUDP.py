@@ -469,8 +469,8 @@ class NodeUDP(Node):
     # Se encarga de enviar un mensaje con datos a uno de los vecinos que está en la tabla de alcanzabilidad
     def sendData(self):
         try:
-            self.lockReach.acquire()
-            self.lockNeighbor.acquire()
+            #self.lockReach.acquire()
+            #self.lockNeighbor.acquire()
 
             self.enlitsReachabilityTable()
             answer = input(self.reachableNodeOptionMessage)
@@ -489,8 +489,9 @@ class NodeUDP(Node):
                 self.send(routeNeighbour,encryptedPacket)
 
         finally:
-            self.lockNeighbor.release()
-            self.lockReach.release()
+            #self.lockNeighbor.release()
+            #self.lockReach.release()
+            pass
 
 
 

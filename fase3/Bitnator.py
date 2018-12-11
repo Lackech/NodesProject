@@ -85,8 +85,8 @@ class Bitnator:
             cost_bit = int(cost_split).to_bytes(3, 'big')
 
             encryptedTable += IP_bit
-            encryptedTable += port_bit
             encryptedTable += mask_bit
+            encryptedTable += port_bit
             encryptedTable += cost_bit
 
         return encryptedTable
@@ -236,9 +236,9 @@ class Bitnator:
 
                 address = str(num1) + "." + str(num2) + "." + str(num3) + "." + str(num4)
 
-                port = data[i * 10 + 4] * 256 + data[i * 10 + 5]
+                mask = data[i * 10 + 4]
 
-                mask = data[i * 10 + 6]
+                port = data[i * 10 + 5] * 256 + data[i * 10 + 6]
 
                 cost = data[i * 10 + 7] * 65536 + data[i * 10 + 8] * 256 + data[i * 10 + 9]
 

@@ -36,16 +36,24 @@ class NeighborServer(Node):
             with open(fileName) as csvfile:
                 reader = csv.reader(csvfile, delimiter=',')
                 for row in reader:
+                    # Lo metemos primero en el nodo que esta a la derecha
                     nodeAddress = (row[NODE_IP], int(row[NODE_PORT]))
                     nodeAddressValue = (row[NEIGHBOR_IP],int(row[NEIGHBOR_PORT]),int(row[NEIGHBOR_MASCARA]),int(row[DISTANCE]))
-                    # Tengo que pasarlo a listas
-                    listaValor = [nodeAddressValue]
+
+                    # Lo metemos en el nodo que esta de segundo
+                    neighbourAddress = (row[NEIGHBOR_IP], int(row[NEIGHBOR_PORT]))
+                    neighbourAddressValue = (row[NODE_IP], int(row[NODE_PORT]), int(row[NODE_MASCARA]), int(row[DISTANCE]))
+
+                    # Lo agregamos a la lista para cada uno de los nodos anteriores
                     if self.allNeighbors.get(nodeAddress) is None:
-                        self.allNeighbors[nodeAddress] = listaValor
-                    else:
-                        lista = self.allNeighbors[nodeAddress]
-                        listaValor.extend(lista)
-                        self.allNeighbors[nodeAddress] = listaValor
+                        self.allNeighbors[nodeAddress] = [nodeAddressValue]
+                    elif nodeAddress in self.allNeighbors[nodeAddress]:
+                            self.allNeighbors[nodeAddress].append(nodeAddressValue)
+
+                    if self.allNeighbors.get(neighbourAddress) is None:
+                        self.allNeighbors[neighbourAddress] = [neighbourAddressValue]
+                    elif neighbourAddress in self.allNeighbors[neighbourAddress]:
+                            self.allNeighbors[neighbourAddress].append(neighbourAddressValue)
 
         except:
             # Quiere decir que en el proceso hubo algún error por lo que no se puedo leer correctamente el archivo
