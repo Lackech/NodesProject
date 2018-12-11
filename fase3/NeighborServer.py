@@ -47,12 +47,12 @@ class NeighborServer(Node):
                     # Lo agregamos a la lista para cada uno de los nodos anteriores
                     if self.allNeighbors.get(nodeAddress) is None:
                         self.allNeighbors[nodeAddress] = [nodeAddressValue]
-                    elif nodeAddress in self.allNeighbors[nodeAddress]:
+                    elif not (nodeAddress in self.allNeighbors[nodeAddress]):
                             self.allNeighbors[nodeAddress].append(nodeAddressValue)
 
                     if self.allNeighbors.get(neighbourAddress) is None:
                         self.allNeighbors[neighbourAddress] = [neighbourAddressValue]
-                    elif neighbourAddress in self.allNeighbors[neighbourAddress]:
+                    elif not (neighbourAddress in self.allNeighbors[neighbourAddress]):
                             self.allNeighbors[neighbourAddress].append(neighbourAddressValue)
 
         except:
